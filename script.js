@@ -58,6 +58,7 @@ async function initializeAudio() {
     
     // Create master gain
     masterGainNode = audioContext.createGain();
+    masterGainNode.gain.value = 1.0;
     masterGainNode.connect(audioContext.destination);
     
     // Create reverb using ConvolverNode
@@ -85,11 +86,14 @@ async function initializeAudio() {
     reverbNode.connect(reverbGainNode);
     reverbGainNode.connect(masterGainNode);
     dryGainNode.connect(masterGainNode);
+    
+    console.log('Audio Context initialized:', audioContext.state);
 }
 
 // Create audio buffer source
 async function createAudioSource(url, loop = false) {
     try {
+        console.log('Loading audio:', url);
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -102,8 +106,10 @@ async function createAudioSource(url, loop = false) {
         source.loop = loop;
         
         const gainNode = audioContext.createGain();
+        gainNode.gain.value = 1.0;
         source.connect(gainNode);
         
+        console.log('Audio loaded successfully:', url);
         return { source, gainNode, buffer: audioBuffer };
     } catch (error) {
         console.error('Error loading audio:', url, error);
@@ -156,17 +162,20 @@ async function initializeLoops() {
         
         try {
             const { source, gainNode } = await createAudioSource(config.audio, true);
+            gainNode.gain.value = 0.8; // Slightly lower volume for loops
             gainNode.connect(masterGainNode);
             
             loops.set(config.id, {
                 source,
                 gainNode,
                 checkbox,
-                config: config
+                config: config,
+                isPlaying: checkbox.checked
             });
             
             if (checkbox.checked) {
                 source.start(0);
+                console.log('Started loop:', config.id);
             }
             
             checkbox.addEventListener('change', async (e) => {
@@ -289,18 +298,26 @@ async function playZoneSound(zoneId) {
     const zone = zones.get(zoneId);
     if (!zone) return;
     
+    console.log('Playing zone:', zoneId);
+    
     // Stop any existing sound for this zone
     stopZoneSound(zoneId);
     
     try {
         const { source, gainNode } = await createAudioSource(zone.config.audio);
         
+        // Set gain to ensure it's audible
+        gainNode.gain.value = 1.0;
+        
         // Connect to reverb if needed
         if (zone.config.reverb) {
+            // Create a splitter to send to both dry and wet
             gainNode.connect(reverbNode);
             gainNode.connect(dryGainNode);
+            console.log('Connected to reverb:', zoneId);
         } else {
             gainNode.connect(masterGainNode);
+            console.log('Connected directly to master:', zoneId);
         }
         
         // Store active audio
@@ -311,14 +328,17 @@ async function playZoneSound(zoneId) {
         
         // Start playback
         source.start(0);
+        console.log('Started playback:', zoneId);
         
         // Remove active state when ended
         source.onended = () => {
+            console.log('Playback ended:', zoneId);
             zone.element.classList.remove('active');
             activeAudio.delete(zoneId);
         };
     } catch (error) {
         console.error(`Failed to play zone ${zoneId}:`, error);
+        zone.element.classList.remove('active');
     }
 }
 

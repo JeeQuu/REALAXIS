@@ -37,12 +37,10 @@ const loopConfigs = [
 // State management
 const zones = new Map();
 const loops = new Map();
+const activeAudio = new Map(); // Track active audio per zone
 let triggerMode = 'oneshot';
-let trackingLag = 100;
 let draggedZone = null;
 let resizingZone = null;
-let mouseTrackingTimeout = null;
-let lastMousePosition = { x: 0, y: 0 };
 
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
@@ -50,7 +48,7 @@ document.getElementById('startButton').addEventListener('click', async () => {
     document.getElementById('startScreen').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     initializeZones();
-    initializeLoops();
+    await initializeLoops();
     setupEventListeners();
 });
 
@@ -106,7 +104,7 @@ async function createAudioSource(url, loop = false) {
         const gainNode = audioContext.createGain();
         source.connect(gainNode);
         
-        return { source, gainNode };
+        return { source, gainNode, buffer: audioBuffer };
     } catch (error) {
         console.error('Error loading audio:', url, error);
         throw error;
@@ -144,8 +142,6 @@ function initializeZones() {
         zones.set(config.id, {
             element: zoneElement,
             config: config,
-            audioSource: null,
-            isPlaying: false,
             camera: cameraIndex + 1
         });
         
@@ -157,106 +153,91 @@ function initializeZones() {
 async function initializeLoops() {
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
-        const { source, gainNode } = await createAudioSource(config.audio, true);
         
-        gainNode.connect(masterGainNode);
-        
-        loops.set(config.id, {
-            source,
-            gainNode,
-            checkbox,
-            isPlaying: checkbox.checked
-        });
-        
-        if (checkbox.checked) {
-            source.start();
-        }
-        
-        checkbox.addEventListener('change', (e) => {
-            const loop = loops.get(config.id);
-            if (e.target.checked && !loop.isPlaying) {
-                startLoop(config.id);
-            } else if (!e.target.checked && loop.isPlaying) {
-                stopLoop(config.id);
+        try {
+            const { source, gainNode } = await createAudioSource(config.audio, true);
+            gainNode.connect(masterGainNode);
+            
+            loops.set(config.id, {
+                source,
+                gainNode,
+                checkbox,
+                config: config
+            });
+            
+            if (checkbox.checked) {
+                source.start(0);
             }
-        });
+            
+            checkbox.addEventListener('change', async (e) => {
+                if (e.target.checked) {
+                    await startLoop(config.id);
+                } else {
+                    stopLoop(config.id);
+                }
+            });
+        } catch (error) {
+            console.error(`Failed to load loop ${config.id}:`, error);
+            checkbox.disabled = true;
+        }
     }
 }
 
 // Start loop
 async function startLoop(loopId) {
     const loop = loops.get(loopId);
-    const config = loopConfigs.find(c => c.id === loopId);
+    if (!loop) return;
     
-    const { source, gainNode } = await createAudioSource(config.audio, true);
-    gainNode.connect(masterGainNode);
-    
-    loop.source = source;
-    loop.gainNode = gainNode;
-    loop.isPlaying = true;
-    
-    source.start();
-    loops.set(loopId, loop);
+    try {
+        const { source, gainNode } = await createAudioSource(loop.config.audio, true);
+        gainNode.connect(masterGainNode);
+        
+        // Stop old source if exists
+        if (loop.source) {
+            loop.source.stop();
+        }
+        
+        loop.source = source;
+        loop.gainNode = gainNode;
+        source.start(0);
+        
+        loops.set(loopId, loop);
+    } catch (error) {
+        console.error(`Failed to start loop ${loopId}:`, error);
+    }
 }
 
 // Stop loop
 function stopLoop(loopId) {
     const loop = loops.get(loopId);
-    if (loop.source) {
+    if (loop && loop.source) {
         loop.source.stop();
-        loop.isPlaying = false;
     }
 }
 
 // Setup zone interactions
 function setupZoneInteractions(zoneElement, config) {
-    let isMouseDown = false;
-    let isHovering = false;
+    // Simple click for oneshot mode
+    zoneElement.addEventListener('click', (e) => {
+        if (e.target.classList.contains('zone-resize-handle')) return;
+        if (triggerMode === 'oneshot') {
+            playZoneSound(config.id);
+        }
+    });
     
-    // Mouse enter/leave for cursor change
+    // Mouse enter/leave for hold mode and cursor
     zoneElement.addEventListener('mouseenter', () => {
-        if (!draggedZone && !resizingZone) {
-            document.body.className = config.cursor;
-            isHovering = true;
-            
-            // For hold mode, trigger on hover
-            if (triggerMode === 'hold') {
-                triggerZone(config.id);
-            }
+        document.body.className = config.cursor;
+        if (triggerMode === 'hold') {
+            playZoneSound(config.id);
         }
     });
     
     zoneElement.addEventListener('mouseleave', () => {
         document.body.className = '';
-        isHovering = false;
         if (triggerMode === 'hold') {
-            stopZoneWithFade(config.id);
+            stopZoneSound(config.id);
         }
-    });
-    
-    // Click handling for oneshot mode
-    zoneElement.addEventListener('mousedown', (e) => {
-        if (e.target.classList.contains('zone-resize-handle')) return;
-        
-        isMouseDown = true;
-        
-        // For oneshot mode, trigger on click
-        if (triggerMode === 'oneshot') {
-            // Simulate tracking lag
-            if (trackingLag > 0) {
-                setTimeout(() => {
-                    if (isMouseDown) {
-                        triggerZone(config.id);
-                    }
-                }, trackingLag);
-            } else {
-                triggerZone(config.id);
-            }
-        }
-    });
-    
-    zoneElement.addEventListener('mouseup', () => {
-        isMouseDown = false;
     });
     
     // Drag handling
@@ -303,21 +284,13 @@ function setupZoneInteractions(zoneElement, config) {
     });
 }
 
-// Trigger zone audio
-async function triggerZone(zoneId) {
+// Play zone sound
+async function playZoneSound(zoneId) {
     const zone = zones.get(zoneId);
     if (!zone) return;
     
-    // For oneshot mode, don't retrigger if already playing
-    if (triggerMode === 'oneshot' && zone.isPlaying) return;
-    
-    // For hold mode, stop previous if retriggering
-    if (zone.isPlaying && zone.audioSource) {
-        zone.audioSource.source.stop();
-        zone.isPlaying = false;
-    }
-    
-    zone.element.classList.add('active');
+    // Stop any existing sound for this zone
+    stopZoneSound(zoneId);
     
     try {
         const { source, gainNode } = await createAudioSource(zone.config.audio);
@@ -330,39 +303,44 @@ async function triggerZone(zoneId) {
             gainNode.connect(masterGainNode);
         }
         
-        zone.audioSource = { source, gainNode };
-        zone.isPlaying = true;
+        // Store active audio
+        activeAudio.set(zoneId, { source, gainNode });
         
-        source.start();
+        // Add active class
+        zone.element.classList.add('active');
         
+        // Start playback
+        source.start(0);
+        
+        // Remove active state when ended
         source.onended = () => {
-            zone.isPlaying = false;
             zone.element.classList.remove('active');
-            zone.audioSource = null;
+            activeAudio.delete(zoneId);
         };
     } catch (error) {
-        console.error('Error playing zone audio:', error);
-        zone.element.classList.remove('active');
-        zone.isPlaying = false;
+        console.error(`Failed to play zone ${zoneId}:`, error);
     }
 }
 
-// Stop zone with fade
-function stopZoneWithFade(zoneId) {
+// Stop zone sound
+function stopZoneSound(zoneId) {
     const zone = zones.get(zoneId);
-    if (!zone || !zone.isPlaying || !zone.audioSource) return;
+    const audio = activeAudio.get(zoneId);
     
-    const { gainNode, source } = zone.audioSource;
+    if (audio) {
+        // Fade out
+        audio.gainNode.gain.setValueAtTime(audio.gainNode.gain.value, audioContext.currentTime);
+        audio.gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+        
+        setTimeout(() => {
+            audio.source.stop();
+            activeAudio.delete(zoneId);
+        }, 200);
+    }
     
-    // Fade out over 200ms
-    gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
-    
-    setTimeout(() => {
-        source.stop();
-        zone.isPlaying = false;
+    if (zone) {
         zone.element.classList.remove('active');
-    }, 200);
+    }
 }
 
 // Setup camera drop zones
@@ -408,6 +386,10 @@ function setupEventListeners() {
     document.querySelectorAll('input[name="triggerMode"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             triggerMode = e.target.value;
+            // Stop all sounds when switching modes
+            activeAudio.forEach((audio, zoneId) => {
+                stopZoneSound(zoneId);
+            });
         });
     });
     
@@ -444,40 +426,17 @@ function setupEventListeners() {
         reverbNode.buffer = impulse;
     });
     
-    // Tracking lag control
+    // Tracking lag control (simplified - just updates value)
     const trackingLagSlider = document.getElementById('trackingLag');
     const trackingLagValue = document.getElementById('trackingLagValue');
     
     trackingLagSlider.addEventListener('input', (e) => {
-        trackingLag = parseInt(e.target.value);
-        trackingLagValue.textContent = `${trackingLag}ms`;
+        trackingLagValue.textContent = `${e.target.value}ms`;
     });
     
     // Save/Load layout
     document.getElementById('saveLayout').addEventListener('click', saveLayout);
     document.getElementById('loadLayout').addEventListener('click', loadLayout);
-    
-    // Mouse tracking for lag simulation
-    document.addEventListener('mousemove', (e) => {
-        if (mouseTrackingTimeout) {
-            clearTimeout(mouseTrackingTimeout);
-        }
-        
-        const deltaX = Math.abs(e.clientX - lastMousePosition.x);
-        const deltaY = Math.abs(e.clientY - lastMousePosition.y);
-        const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        
-        // Simulate tracking loss at high speeds
-        if (speed > 50 && trackingLag > 0) {
-            document.body.style.pointerEvents = 'none';
-            
-            mouseTrackingTimeout = setTimeout(() => {
-                document.body.style.pointerEvents = 'auto';
-            }, trackingLag);
-        }
-        
-        lastMousePosition = { x: e.clientX, y: e.clientY };
-    });
 }
 
 // Save layout to localStorage

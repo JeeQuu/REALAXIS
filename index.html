@@ -77,10 +77,15 @@
             <div class="mode-controls">
                 <h3>Zone Trigger Mode</h3>
                 <div class="mode-toggle">
-                    <input type="radio" id="modeOneShot" name="triggerMode" value="oneshot" checked>
-                    <label for="modeOneShot">One Shot</label>
+                    <input type="radio" id="modeTrigger" name="triggerMode" value="trigger" checked>
+                    <label for="modeTrigger">Trigger (Play to End)</label>
                     <input type="radio" id="modeHold" name="triggerMode" value="hold">
-                    <label for="modeHold">Hold</label>
+                    <label for="modeHold">Hold (Play While Hovering)</label>
+                </div>
+                <div class="effect-control" style="margin-top: 10px;">
+                    <label>Hold Mode Release Time</label>
+                    <input type="range" id="releaseTime" min="50" max="2000" step="50" value="200">
+                    <span id="releaseTimeValue">200ms</span>
                 </div>
             </div>
         </div>

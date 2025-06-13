@@ -7,23 +7,23 @@ let masterGainNode;
 
 // Zone configurations
 const zoneConfigs = [
-    { id: 'zone-counter', label: '🎵 Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee' },
-    { id: 'zone-diva-01', label: '🎤 Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-02', label: '🎤 Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-03', label: '🎤 Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-04', label: '🎤 Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-05', label: '🎤 Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-06', label: '🎤 Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-07', label: '🎤 Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-08', label: '🎤 Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-09', label: '🎤 Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-10', label: '🎤 Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-moog-01', label: '🎸 Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-02', label: '🎸 Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-03', label: '🎸 Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-04', label: '🎸 Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-05', label: '🎸 Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-noise', label: '💥 Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis' }
+    { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee' },
+    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true },
+    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher' },
+    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher' },
+    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher' },
+    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher' },
+    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher' },
+    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis' }
 ];
 
 // Loop configurations
@@ -38,18 +38,55 @@ const loopConfigs = [
 const zones = new Map();
 const loops = new Map();
 const activeAudio = new Map(); // Track active audio per zone
-let triggerMode = 'oneshot';
+let triggerMode = 'trigger';
+let releaseTime = 200; // Release time in milliseconds
 let draggedZone = null;
 let resizingZone = null;
 
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
-    await initializeAudio();
-    document.getElementById('startScreen').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    initializeZones();
-    await initializeLoops();
-    setupEventListeners();
+    try {
+        await initializeAudio();
+        
+        // Extra Safari-specific handling
+        if (audioContext.state === 'suspended') {
+            console.log('Audio context still suspended after init, trying to resume...');
+            await audioContext.resume();
+        }
+        
+        // Ensure audio context is running
+        if (audioContext.state !== 'running') {
+            console.error('Audio context failed to start:', audioContext.state);
+            alert('Audio system failed to initialize. Please try refreshing the page.');
+            return;
+        }
+        
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        initializeZones();
+        await initializeLoops();
+        setupEventListeners();
+        
+        console.log('Application fully initialized!');
+    } catch (error) {
+        console.error('Failed to initialize application:', error);
+        alert('Failed to start application: ' + error.message);
+    }
+});
+
+// Add additional user interaction handlers for Safari
+document.addEventListener('click', async () => {
+    if (audioContext && audioContext.state === 'suspended') {
+        console.log('Resuming audio context on user interaction...');
+        await audioContext.resume();
+    }
+});
+
+document.addEventListener('touchstart', async () => {
+    if (audioContext && audioContext.state === 'suspended') {
+        console.log('Resuming audio context on touch...');
+        await audioContext.resume();
+    }
 });
 
 // Initialize Audio Context and Effects
@@ -294,28 +331,34 @@ function stopLoop(loopId) {
 
 // Setup zone interactions
 function setupZoneInteractions(zoneElement, config) {
-    // Simple click for oneshot mode
-    zoneElement.addEventListener('click', (e) => {
-        if (e.target.classList.contains('zone-resize-handle')) return;
-        if (triggerMode === 'oneshot') {
-            playZoneSound(config.id);
-        }
-    });
-    
-    // Mouse enter/leave for hold mode and cursor
-    zoneElement.addEventListener('mouseenter', () => {
+    // Mouse enter - both modes trigger on hover
+    zoneElement.addEventListener('mouseenter', (e) => {
+        console.log('Zone mouseenter:', config.id, 'Mode:', triggerMode);
+        
+        // Change cursor for entire zone
         document.body.className = config.cursor;
-        if (triggerMode === 'hold') {
-            playZoneSound(config.id);
-        }
+        
+        // Play sound in both modes on hover
+        playZoneSound(config.id);
     });
     
-    zoneElement.addEventListener('mouseleave', () => {
+    // Mouse leave - different behavior based on mode
+    zoneElement.addEventListener('mouseleave', (e) => {
+        console.log('Zone mouseleave:', config.id, 'Mode:', triggerMode);
+        
+        // Reset cursor
         document.body.className = '';
+        
+        // Only stop sound in hold mode
         if (triggerMode === 'hold') {
             stopZoneSound(config.id);
         }
+        // In trigger mode, let the sound play to completion
     });
+    
+    // Prevent label from interfering with zone interactions
+    const zoneLabel = zoneElement.querySelector('.zone-label');
+    zoneLabel.style.pointerEvents = 'none';
     
     // Drag handling
     zoneElement.addEventListener('dragstart', (e) => {
@@ -372,8 +415,15 @@ async function playZoneSound(zoneId) {
     console.log('Playing zone:', zoneId);
     console.log('Audio context state:', audioContext.state);
     console.log('Zone config:', zone.config);
+    console.log('Trigger mode:', triggerMode);
     
-    // Stop any existing sound for this zone
+    // In trigger mode, don't restart if already playing
+    if (triggerMode === 'trigger' && activeAudio.has(zoneId)) {
+        console.log('Zone already playing in trigger mode, ignoring:', zoneId);
+        return;
+    }
+    
+    // Stop any existing sound for this zone (important for hold mode)
     stopZoneSound(zoneId);
     
     try {
@@ -407,7 +457,7 @@ async function playZoneSound(zoneId) {
         source.start(0);
         console.log('Playback started for zone:', zoneId);
         
-        // Remove active state when ended
+        // Remove active state when ended (for both modes)
         source.onended = () => {
             console.log('Playback ended for zone:', zoneId);
             zone.element.classList.remove('active');
@@ -425,18 +475,31 @@ function stopZoneSound(zoneId) {
     const audio = activeAudio.get(zoneId);
     
     if (audio) {
+        // Create smooth fade out based on release time
+        const fadeTime = releaseTime / 1000; // Convert to seconds
+        
+        console.log(`Stopping zone ${zoneId} with ${fadeTime}s release`);
+        
         // Fade out
         audio.gainNode.gain.setValueAtTime(audio.gainNode.gain.value, audioContext.currentTime);
-        audio.gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+        audio.gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeTime);
         
         setTimeout(() => {
-            audio.source.stop();
-            activeAudio.delete(zoneId);
-        }, 200);
+            try {
+                audio.source.stop();
+                activeAudio.delete(zoneId);
+            } catch (error) {
+                // Source might already be stopped, ignore error
+                console.log('Source already stopped:', zoneId);
+            }
+        }, releaseTime);
     }
     
     if (zone) {
-        zone.element.classList.remove('active');
+        // Remove active class after release time
+        setTimeout(() => {
+            zone.element.classList.remove('active');
+        }, releaseTime);
     }
 }
 
@@ -483,11 +546,23 @@ function setupEventListeners() {
     document.querySelectorAll('input[name="triggerMode"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             triggerMode = e.target.value;
+            console.log('Trigger mode changed to:', triggerMode);
+            
             // Stop all sounds when switching modes
             activeAudio.forEach((audio, zoneId) => {
                 stopZoneSound(zoneId);
             });
         });
+    });
+    
+    // Release time control
+    const releaseTimeSlider = document.getElementById('releaseTime');
+    const releaseTimeValue = document.getElementById('releaseTimeValue');
+    
+    releaseTimeSlider.addEventListener('input', (e) => {
+        releaseTime = parseInt(e.target.value);
+        releaseTimeValue.textContent = `${releaseTime}ms`;
+        console.log('Release time set to:', releaseTime, 'ms');
     });
     
     // Reverb controls
@@ -617,9 +692,10 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && !e.target.matches('input')) {
         e.preventDefault();
         const currentMode = document.querySelector('input[name="triggerMode"]:checked').value;
-        const newMode = currentMode === 'oneshot' ? 'hold' : 'oneshot';
-        document.getElementById(newMode === 'oneshot' ? 'modeOneShot' : 'modeHold').checked = true;
+        const newMode = currentMode === 'trigger' ? 'hold' : 'trigger';
+        document.getElementById(newMode === 'trigger' ? 'modeTrigger' : 'modeHold').checked = true;
         triggerMode = newMode;
+        console.log('Keyboard shortcut: switched to', newMode, 'mode');
     }
     
     // Number keys 1-4 to toggle loops
@@ -716,4 +792,51 @@ window.audioDiagnostic = function() {
     }
     
     console.log('=== END DIAGNOSTIC ===');
+};
+
+// Safari-specific test function
+window.safariAudioTest = async function() {
+    console.log('=== SAFARI AUDIO TEST ===');
+    console.log('User agent:', navigator.userAgent);
+    console.log('Is Safari:', /^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+    
+    if (!audioContext) {
+        console.error('❌ Audio context not initialized');
+        return;
+    }
+    
+    console.log('Audio context state:', audioContext.state);
+    
+    // Try to resume context
+    if (audioContext.state === 'suspended') {
+        console.log('Attempting to resume audio context...');
+        try {
+            await audioContext.resume();
+            console.log('✅ Audio context resumed, new state:', audioContext.state);
+        } catch (error) {
+            console.error('❌ Failed to resume audio context:', error);
+        }
+    }
+    
+    // Test with simple oscillator
+    if (audioContext.state === 'running') {
+        console.log('Testing with 1-second tone...');
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(masterGainNode);
+        
+        oscillator.frequency.value = 440;
+        gainNode.gain.value = 0.1;
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 1);
+        
+        console.log('✅ Test tone should be playing now');
+    } else {
+        console.error('❌ Audio context not running:', audioContext.state);
+    }
+    
+    console.log('=== END SAFARI TEST ===');
 };

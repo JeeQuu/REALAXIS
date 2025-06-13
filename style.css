@@ -363,6 +363,13 @@ body {
     transform: scale(0.95);
 }
 
+.detection-zone.choking {
+    opacity: 0.6;
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    transform: scale(0.98);
+}
+
 .zone-label {
     position: absolute;
     top: 50%;

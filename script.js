@@ -69,7 +69,8 @@ const loops = new Map();
 const activeAudio = new Map(); // Track active audio per zone
 const activeZonesByLayer = new Map(); // Track active zones per layer for mono mode
 let triggerMode = 'trigger';
-let releaseTime = 200; // Release time in milliseconds
+let releaseTime = 200; // Release time in milliseconds for hold mode
+let chokeTime = 50; // Shorter fade time for monophonic choke groups (ms)
 let draggedZone = null;
 let resizingZone = null;
 
@@ -533,19 +534,22 @@ async function playZoneSound(zoneId) {
         return;
     }
     
-    // Handle mono mode - stop other sounds in the same layer
+    // Handle mono mode - choke other sounds in the same layer
     if (layerState[layer].mono) {
         const activeZonesInLayer = activeZonesByLayer.get(layer);
         for (const activeZoneId of activeZonesInLayer) {
             if (activeZoneId !== zoneId) {
-                console.log('Mono mode: stopping', activeZoneId, 'to play', zoneId);
-                stopZoneSound(activeZoneId);
+                console.log('Mono mode: choking', activeZoneId, 'to play', zoneId);
+                chokeZoneSound(activeZoneId, 'monophonic choke');
             }
         }
     }
     
     // Stop any existing sound for this zone (important for hold mode)
     stopZoneSound(zoneId);
+    
+    // Add to layer tracking immediately to ensure proper choke ordering
+    activeZonesByLayer.get(layer).add(zoneId);
     
     try {
         const { source, gainNode } = await createAudioSource(zone.config.audio);
@@ -571,9 +575,6 @@ async function playZoneSound(zoneId) {
         // Store active audio
         activeAudio.set(zoneId, { source, gainNode, layer });
         
-        // Track active zone in layer
-        activeZonesByLayer.get(layer).add(zoneId);
-        
         // Add active class
         zone.element.classList.add('active');
         
@@ -592,6 +593,52 @@ async function playZoneSound(zoneId) {
     } catch (error) {
         console.error(`Failed to play zone ${zoneId}:`, error);
         zone.element.classList.remove('active');
+    }
+}
+
+// Choke zone sound (for monophonic groups) - faster, smoother fade
+function chokeZoneSound(zoneId, reason = 'choke') {
+    const zone = zones.get(zoneId);
+    const audio = activeAudio.get(zoneId);
+    
+    if (audio) {
+        // Use shorter choke time for musical choke groups
+        const fadeTime = chokeTime / 1000; // Convert to seconds
+        
+        console.log(`Choking zone ${zoneId} (${reason}) with ${fadeTime}s fade`);
+        
+        // Add visual choking indicator
+        if (zone) {
+            zone.element.classList.add('choking');
+        }
+        
+        // Fast, smooth fade out
+        audio.gainNode.gain.setValueAtTime(audio.gainNode.gain.value, audioContext.currentTime);
+        audio.gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + fadeTime); // Exponential for more natural sound
+        
+        // Stop source after fade
+        setTimeout(() => {
+            try {
+                audio.source.stop();
+                activeAudio.delete(zoneId);
+                
+                // Clean up layer tracking
+                if (audio.layer) {
+                    activeZonesByLayer.get(audio.layer).delete(zoneId);
+                }
+            } catch (error) {
+                // Source might already be stopped, ignore error
+                console.log('Source already stopped during choke:', zoneId);
+            }
+        }, chokeTime);
+    }
+    
+    if (zone) {
+        // Remove visual states after choke
+        setTimeout(() => {
+            zone.element.classList.remove('active');
+            zone.element.classList.remove('choking');
+        }, chokeTime);
     }
 }
 
@@ -723,6 +770,16 @@ function setupEventListeners() {
         console.log('Release time set to:', releaseTime, 'ms');
     });
     
+    // Choke time control
+    const chokeTimeSlider = document.getElementById('chokeTime');
+    const chokeTimeValue = document.getElementById('chokeTimeValue');
+    
+    chokeTimeSlider.addEventListener('input', (e) => {
+        chokeTime = parseInt(e.target.value);
+        chokeTimeValue.textContent = `${chokeTime}ms`;
+        console.log('Choke time set to:', chokeTime, 'ms');
+    });
+    
     // Reverb controls
     const reverbMixSlider = document.getElementById('reverbMix');
     const reverbMixValue = document.getElementById('reverbMixValue');
@@ -793,15 +850,15 @@ function setupEventListeners() {
                 layerState[layerName].mono = e.target.checked;
                 console.log(`${layerName} layer mono mode:`, e.target.checked);
                 
-                // If switching to mono and multiple zones are active, stop all but the most recent
+                // If switching to mono and multiple zones are active, choke all but the most recent
                 if (e.target.checked) {
                     const activeZones = Array.from(activeZonesByLayer.get(layerName));
                     if (activeZones.length > 1) {
                         // Keep the most recently triggered zone (last in array)
                         const keepZone = activeZones[activeZones.length - 1];
                         activeZones.slice(0, -1).forEach(zoneId => {
-                            console.log('Mono mode: stopping', zoneId, 'keeping', keepZone);
-                            stopZoneSound(zoneId);
+                            console.log('Mono toggle: choking', zoneId, 'keeping', keepZone);
+                            chokeZoneSound(zoneId, 'mono mode enabled');
                         });
                     }
                 }
@@ -847,6 +904,7 @@ function downloadLayout() {
     // Save trigger mode and release time
     layout.triggerMode = triggerMode;
     layout.releaseTime = releaseTime;
+    layout.chokeTime = chokeTime;
     
     // Create filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -997,6 +1055,16 @@ function loadLayoutFromData(layout) {
         if (slider) {
             slider.value = releaseTime;
             value.textContent = `${releaseTime}ms`;
+        }
+    }
+    
+    if (layout.chokeTime) {
+        chokeTime = layout.chokeTime;
+        const slider = document.getElementById('chokeTime');
+        const value = document.getElementById('chokeTimeValue');
+        if (slider) {
+            slider.value = chokeTime;
+            value.textContent = `${chokeTime}ms`;
         }
     }
     

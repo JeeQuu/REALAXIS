@@ -126,7 +126,13 @@ const monicaDefaultLayout = {
         { "id": "zone-moog-04", "camera": "3", "left": "54px", "top": "47px", "width": "120px", "height": "80px", "mode": "hold" },
         { "id": "zone-moog-05", "camera": "3", "left": "48px", "top": "259px", "width": "120px", "height": "80px", "mode": "hold" },
         { "id": "zone-noise", "camera": "4", "left": "248.5px", "top": "123px", "width": "120px", "height": "80px", "mode": "hold" }
-    ]
+    ],
+    "cameraObjects": {
+        "1": "coffee",
+        "2": "extinguisher", 
+        "3": "tennis",
+        "4": "coffee"
+    }
 };
 
 // Initialize on start button click
@@ -160,6 +166,7 @@ document.getElementById('startButton').addEventListener('click', async () => {
         
         await initializeLoops();
         setupEventListeners();
+        setupCameraObjectControls(); // Add object control listeners
         
         console.log('Application fully initialized!');
     } catch (error) {
@@ -945,7 +952,11 @@ function downloadLayout() {
         layers: {},
         version: "1.0",
         timestamp: new Date().toISOString(),
-        name: "Quantastical Layout"
+        name: "Quantastical Layout",
+        triggerMode: triggerMode,
+        releaseTime: releaseTime,
+        chokeTime: chokeTime,
+        cameraObjects: { ...cameraObjects }
     };
     
     // Save zone positions and modes
@@ -979,11 +990,6 @@ function downloadLayout() {
             muted: loop.isMuted
         };
     });
-    
-    // Save trigger mode and release time
-    layout.triggerMode = triggerMode;
-    layout.releaseTime = releaseTime;
-    layout.chokeTime = chokeTime;
     
     // Create filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -1166,6 +1172,23 @@ function loadLayoutFromData(layout) {
             slider.value = chokeTime;
             value.textContent = `${chokeTime}ms`;
         }
+    }
+    
+    // Load camera object assignments
+    if (layout.cameraObjects) {
+        Object.keys(layout.cameraObjects).forEach(cameraNumber => {
+            const objectType = layout.cameraObjects[cameraNumber];
+            cameraObjects[cameraNumber] = objectType;
+            
+            // Update the dropdown
+            const selector = document.getElementById(`camera-${cameraNumber}-object`);
+            if (selector) {
+                selector.value = objectType;
+            }
+            
+            // Update the silhouette
+            updateCameraSilhouette(parseInt(cameraNumber), objectType);
+        });
     }
     
     // Visual feedback
@@ -1365,6 +1388,44 @@ function updateLayerVolume(layerName, volume) {
         if (loop && loop.gainNode) {
             loop.gainNode.gain.value = volume;
             console.log(`Updated loop ${loopId} volume to:`, volume);
+        }
+    });
+}
+
+// Update camera silhouette
+function updateCameraSilhouette(cameraNumber, objectType) {
+    const camera = document.querySelectorAll('.camera-screen')[cameraNumber - 1];
+    const existingContainer = camera.querySelector('.camera-silhouette-container');
+    
+    // Remove existing silhouette
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+    
+    // Add new silhouette
+    if (objectType && objectSilhouettes[objectType]) {
+        const silhouetteContainer = document.createElement('div');
+        silhouetteContainer.className = 'camera-silhouette-container';
+        silhouetteContainer.innerHTML = objectSilhouettes[objectType];
+        
+        // Insert as first child so it appears behind zones
+        camera.insertBefore(silhouetteContainer, camera.firstChild);
+        
+        console.log(`Camera ${cameraNumber} silhouette updated to ${objectType}`);
+    }
+}
+
+// Setup camera object change listeners
+function setupCameraObjectControls() {
+    [1, 2, 3, 4].forEach(cameraNumber => {
+        const selector = document.getElementById(`camera-${cameraNumber}-object`);
+        if (selector) {
+            selector.addEventListener('change', (e) => {
+                const newObjectType = e.target.value;
+                cameraObjects[cameraNumber] = newObjectType;
+                updateCameraSilhouette(cameraNumber, newObjectType);
+                console.log(`Camera ${cameraNumber} object changed to ${newObjectType}`);
+            });
         }
     });
 }

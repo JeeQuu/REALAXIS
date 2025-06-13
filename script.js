@@ -43,6 +43,7 @@ let draggedZone = null;
 let resizingZone = null;
 let mouseTrackingTimeout = null;
 let lastMousePosition = { x: 0, y: 0 };
+let masterStartTime = 0;
 
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
@@ -147,6 +148,9 @@ function initializeZones() {
 
 // Initialize loops
 async function initializeLoops() {
+    // Set master start time
+    masterStartTime = audioContext.currentTime;
+    
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
         const { source, gainNode } = await createAudioSource(config.audio, true);
@@ -157,11 +161,12 @@ async function initializeLoops() {
             source,
             gainNode,
             checkbox,
-            isPlaying: checkbox.checked
+            isPlaying: checkbox.checked,
+            config: config
         });
         
         if (checkbox.checked) {
-            source.start();
+            source.start(masterStartTime);
         }
         
         checkbox.addEventListener('change', (e) => {
@@ -178,16 +183,27 @@ async function initializeLoops() {
 // Start loop
 async function startLoop(loopId) {
     const loop = loops.get(loopId);
-    const config = loopConfigs.find(c => c.id === loopId);
+    const config = loop.config;
     
     const { source, gainNode } = await createAudioSource(config.audio, true);
     gainNode.connect(masterGainNode);
+    
+    // Calculate how much time has passed since master start
+    const elapsedTime = audioContext.currentTime - masterStartTime;
+    
+    // Get the audio buffer duration to calculate the sync offset
+    const audioBuffer = source.buffer;
+    const loopDuration = audioBuffer.duration;
+    
+    // Calculate the offset within the current loop cycle
+    const syncOffset = elapsedTime % loopDuration;
     
     loop.source = source;
     loop.gainNode = gainNode;
     loop.isPlaying = true;
     
-    source.start();
+    // Start the loop at the correct sync point
+    source.start(audioContext.currentTime, syncOffset);
     loops.set(loopId, loop);
 }
 
@@ -426,8 +442,13 @@ function setupEventListeners() {
     document.getElementById('saveLayout').addEventListener('click', saveLayout);
     document.getElementById('loadLayout').addEventListener('click', loadLayout);
     
-    // Mouse tracking for lag simulation (only affect zones, not entire interface)
+    // Mouse tracking for lag simulation (only affect zones during fast movement)
     document.addEventListener('mousemove', (e) => {
+        // Skip if we're dragging or resizing
+        if (draggedZone || resizingZone) {
+            return;
+        }
+        
         if (mouseTrackingTimeout) {
             clearTimeout(mouseTrackingTimeout);
         }
@@ -436,13 +457,15 @@ function setupEventListeners() {
         const deltaY = Math.abs(e.clientY - lastMousePosition.y);
         const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         
-        // Simulate tracking loss at high speeds - only affect detection zones
-        if (speed > 50 && trackingLag > 0) {
+        // Only simulate tracking loss at very high speeds and when lag is enabled
+        if (speed > 100 && trackingLag > 50) {
             // Disable only zone interactions, not the entire interface
             const detectionZones = document.querySelectorAll('.detection-zone');
             detectionZones.forEach(zone => {
-                zone.style.pointerEvents = 'none';
-                zone.style.opacity = '0.5';
+                if (!zone.matches(':hover')) { // Don't disable zone user is hovering over
+                    zone.style.pointerEvents = 'none';
+                    zone.style.opacity = '0.7';
+                }
             });
             
             mouseTrackingTimeout = setTimeout(() => {
@@ -450,7 +473,7 @@ function setupEventListeners() {
                     zone.style.pointerEvents = 'auto';
                     zone.style.opacity = '1';
                 });
-            }, trackingLag);
+            }, Math.min(trackingLag, 200)); // Cap tracking lag at 200ms
         }
         
         lastMousePosition = { x: e.clientX, y: e.clientY };

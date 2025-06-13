@@ -43,7 +43,6 @@ let draggedZone = null;
 let resizingZone = null;
 let mouseTrackingTimeout = null;
 let lastMousePosition = { x: 0, y: 0 };
-let masterStartTime = 0;
 
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
@@ -92,18 +91,26 @@ async function initializeAudio() {
 
 // Create audio buffer source
 async function createAudioSource(url, loop = false) {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.loop = loop;
-    
-    const gainNode = audioContext.createGain();
-    source.connect(gainNode);
-    
-    return { source, gainNode };
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = loop;
+        
+        const gainNode = audioContext.createGain();
+        source.connect(gainNode);
+        
+        return { source, gainNode };
+    } catch (error) {
+        console.error('Error loading audio:', url, error);
+        throw error;
+    }
 }
 
 // Initialize zones
@@ -148,9 +155,6 @@ function initializeZones() {
 
 // Initialize loops
 async function initializeLoops() {
-    // Set master start time
-    masterStartTime = audioContext.currentTime;
-    
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
         const { source, gainNode } = await createAudioSource(config.audio, true);
@@ -161,12 +165,11 @@ async function initializeLoops() {
             source,
             gainNode,
             checkbox,
-            isPlaying: checkbox.checked,
-            config: config
+            isPlaying: checkbox.checked
         });
         
         if (checkbox.checked) {
-            source.start(masterStartTime);
+            source.start();
         }
         
         checkbox.addEventListener('change', (e) => {
@@ -183,27 +186,16 @@ async function initializeLoops() {
 // Start loop
 async function startLoop(loopId) {
     const loop = loops.get(loopId);
-    const config = loop.config;
+    const config = loopConfigs.find(c => c.id === loopId);
     
     const { source, gainNode } = await createAudioSource(config.audio, true);
     gainNode.connect(masterGainNode);
-    
-    // Calculate how much time has passed since master start
-    const elapsedTime = audioContext.currentTime - masterStartTime;
-    
-    // Get the audio buffer duration to calculate the sync offset
-    const audioBuffer = source.buffer;
-    const loopDuration = audioBuffer.duration;
-    
-    // Calculate the offset within the current loop cycle
-    const syncOffset = elapsedTime % loopDuration;
     
     loop.source = source;
     loop.gainNode = gainNode;
     loop.isPlaying = true;
     
-    // Start the loop at the correct sync point
-    source.start(audioContext.currentTime, syncOffset);
+    source.start();
     loops.set(loopId, loop);
 }
 
@@ -219,40 +211,52 @@ function stopLoop(loopId) {
 // Setup zone interactions
 function setupZoneInteractions(zoneElement, config) {
     let isMouseDown = false;
+    let isHovering = false;
     
     // Mouse enter/leave for cursor change
     zoneElement.addEventListener('mouseenter', () => {
         if (!draggedZone && !resizingZone) {
             document.body.className = config.cursor;
+            isHovering = true;
+            
+            // For hold mode, trigger on hover
+            if (triggerMode === 'hold') {
+                triggerZone(config.id);
+            }
         }
     });
     
     zoneElement.addEventListener('mouseleave', () => {
         document.body.className = '';
+        isHovering = false;
         if (triggerMode === 'hold') {
             stopZoneWithFade(config.id);
         }
     });
     
-    // Click/Hold handling
+    // Click handling for oneshot mode
     zoneElement.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('zone-resize-handle')) return;
         
         isMouseDown = true;
         
-        // Simulate tracking lag
-        setTimeout(() => {
-            if (isMouseDown) {
+        // For oneshot mode, trigger on click
+        if (triggerMode === 'oneshot') {
+            // Simulate tracking lag
+            if (trackingLag > 0) {
+                setTimeout(() => {
+                    if (isMouseDown) {
+                        triggerZone(config.id);
+                    }
+                }, trackingLag);
+            } else {
                 triggerZone(config.id);
             }
-        }, trackingLag);
+        }
     });
     
     zoneElement.addEventListener('mouseup', () => {
         isMouseDown = false;
-        if (triggerMode === 'hold') {
-            stopZoneWithFade(config.id);
-        }
     });
     
     // Drag handling
@@ -302,34 +306,45 @@ function setupZoneInteractions(zoneElement, config) {
 // Trigger zone audio
 async function triggerZone(zoneId) {
     const zone = zones.get(zoneId);
-    if (!zone || zone.isPlaying) return;
+    if (!zone) return;
+    
+    // For oneshot mode, don't retrigger if already playing
+    if (triggerMode === 'oneshot' && zone.isPlaying) return;
+    
+    // For hold mode, stop previous if retriggering
+    if (zone.isPlaying && zone.audioSource) {
+        zone.audioSource.source.stop();
+        zone.isPlaying = false;
+    }
     
     zone.element.classList.add('active');
     
-    // Stop previous audio if in oneshot mode
-    if (triggerMode === 'oneshot' && zone.audioSource) {
-        zone.audioSource.source.stop();
-    }
-    
-    const { source, gainNode } = await createAudioSource(zone.config.audio);
-    
-    // Connect to reverb if needed
-    if (zone.config.reverb) {
-        gainNode.connect(reverbNode);
-        gainNode.connect(dryGainNode);
-    } else {
-        gainNode.connect(masterGainNode);
-    }
-    
-    zone.audioSource = { source, gainNode };
-    zone.isPlaying = true;
-    
-    source.start();
-    
-    source.onended = () => {
-        zone.isPlaying = false;
+    try {
+        const { source, gainNode } = await createAudioSource(zone.config.audio);
+        
+        // Connect to reverb if needed
+        if (zone.config.reverb) {
+            gainNode.connect(reverbNode);
+            gainNode.connect(dryGainNode);
+        } else {
+            gainNode.connect(masterGainNode);
+        }
+        
+        zone.audioSource = { source, gainNode };
+        zone.isPlaying = true;
+        
+        source.start();
+        
+        source.onended = () => {
+            zone.isPlaying = false;
+            zone.element.classList.remove('active');
+            zone.audioSource = null;
+        };
+    } catch (error) {
+        console.error('Error playing zone audio:', error);
         zone.element.classList.remove('active');
-    };
+        zone.isPlaying = false;
+    }
 }
 
 // Stop zone with fade
@@ -442,13 +457,8 @@ function setupEventListeners() {
     document.getElementById('saveLayout').addEventListener('click', saveLayout);
     document.getElementById('loadLayout').addEventListener('click', loadLayout);
     
-    // Mouse tracking for lag simulation (only affect zones during fast movement)
+    // Mouse tracking for lag simulation
     document.addEventListener('mousemove', (e) => {
-        // Skip if we're dragging or resizing
-        if (draggedZone || resizingZone) {
-            return;
-        }
-        
         if (mouseTrackingTimeout) {
             clearTimeout(mouseTrackingTimeout);
         }
@@ -457,23 +467,13 @@ function setupEventListeners() {
         const deltaY = Math.abs(e.clientY - lastMousePosition.y);
         const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         
-        // Only simulate tracking loss at very high speeds and when lag is enabled
-        if (speed > 100 && trackingLag > 50) {
-            // Disable only zone interactions, not the entire interface
-            const detectionZones = document.querySelectorAll('.detection-zone');
-            detectionZones.forEach(zone => {
-                if (!zone.matches(':hover')) { // Don't disable zone user is hovering over
-                    zone.style.pointerEvents = 'none';
-                    zone.style.opacity = '0.7';
-                }
-            });
+        // Simulate tracking loss at high speeds
+        if (speed > 50 && trackingLag > 0) {
+            document.body.style.pointerEvents = 'none';
             
             mouseTrackingTimeout = setTimeout(() => {
-                detectionZones.forEach(zone => {
-                    zone.style.pointerEvents = 'auto';
-                    zone.style.opacity = '1';
-                });
-            }, Math.min(trackingLag, 200)); // Cap tracking lag at 200ms
+                document.body.style.pointerEvents = 'auto';
+            }, trackingLag);
         }
         
         lastMousePosition = { x: e.clientX, y: e.clientY };

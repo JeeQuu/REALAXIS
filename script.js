@@ -79,6 +79,29 @@ Object.keys(layerConfig).forEach(layer => {
     activeZonesByLayer.set(layer, new Set());
 });
 
+// Monica's default zone layout - auto-loaded on startup
+const monicaDefaultLayout = {
+    "zones": [
+        { "id": "zone-counter", "camera": "4", "left": "478.5px", "top": "123px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-01", "camera": "1", "left": "712px", "top": "57px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-02", "camera": "1", "left": "376px", "top": "50px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-03", "camera": "1", "left": "65px", "top": "67px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-04", "camera": "2", "left": "526.5px", "top": "242px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-05", "camera": "2", "left": "301.5px", "top": "40px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-06", "camera": "1", "left": "601px", "top": "239px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-07", "camera": "2", "left": "136.5px", "top": "242px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-08", "camera": "1", "left": "254px", "top": "247px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-09", "camera": "2", "left": "591.5px", "top": "38px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-diva-10", "camera": "2", "left": "68.5px", "top": "42px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-moog-01", "camera": "3", "left": "752px", "top": "251px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-moog-02", "camera": "3", "left": "758px", "top": "32px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-moog-03", "camera": "3", "left": "404px", "top": "35px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-moog-04", "camera": "3", "left": "54px", "top": "47px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-moog-05", "camera": "3", "left": "48px", "top": "259px", "width": "120px", "height": "80px", "mode": "hold" },
+        { "id": "zone-noise", "camera": "4", "left": "248.5px", "top": "123px", "width": "120px", "height": "80px", "mode": "hold" }
+    ]
+};
+
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
     try {
@@ -100,6 +123,13 @@ document.getElementById('startButton').addEventListener('click', async () => {
         document.getElementById('startScreen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
         initializeZones();
+        
+        // Auto-load Monica's default layout positions
+        setTimeout(() => {
+            loadLayoutFromData(monicaDefaultLayout);
+            console.log('Monica default layout positions loaded');
+        }, 100); // Small delay to ensure zones are created first
+        
         await initializeLoops();
         setupEventListeners();
         

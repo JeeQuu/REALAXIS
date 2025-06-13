@@ -32,24 +32,72 @@
         <div class="control-panel">
             <!-- Loop Controls -->
             <div class="loop-controls">
-                <h3>Background Loops</h3>
-                <div class="loop-toggles">
-                    <label class="loop-toggle">
-                        <input type="checkbox" id="loop-backing" checked>
-                        <span>Backing</span>
-                    </label>
-                    <label class="loop-toggle">
-                        <input type="checkbox" id="loop-diva" checked>
-                        <span>Diva Lead</span>
-                    </label>
-                    <label class="loop-toggle">
-                        <input type="checkbox" id="loop-moog" checked>
-                        <span>Moog Bass</span>
-                    </label>
-                    <label class="loop-toggle">
-                        <input type="checkbox" id="loop-noise" checked>
-                        <span>Noise Counter</span>
-                    </label>
+                <h3>Audio Layers</h3>
+                
+                <!-- Backing Layer -->
+                <div class="layer-control">
+                    <div class="layer-header">
+                        <label class="loop-toggle">
+                            <input type="checkbox" id="loop-backing" checked>
+                            <span>Backing</span>
+                        </label>
+                        <input type="range" class="volume-slider" id="volume-backing" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-backing-value">80%</span>
+                    </div>
+                </div>
+                
+                <!-- Diva Lead Layer -->
+                <div class="layer-control">
+                    <div class="layer-header">
+                        <label class="loop-toggle">
+                            <input type="checkbox" id="loop-diva" checked>
+                            <span>Diva Lead</span>
+                        </label>
+                        <input type="range" class="volume-slider" id="volume-diva" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-diva-value">80%</span>
+                    </div>
+                    <div class="layer-options">
+                        <label class="mono-poly-toggle">
+                            <input type="checkbox" id="mono-diva">
+                            <span>Mono</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Moog Bass Layer -->
+                <div class="layer-control">
+                    <div class="layer-header">
+                        <label class="loop-toggle">
+                            <input type="checkbox" id="loop-moog" checked>
+                            <span>Moog Bass</span>
+                        </label>
+                        <input type="range" class="volume-slider" id="volume-moog" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-moog-value">80%</span>
+                    </div>
+                    <div class="layer-options">
+                        <label class="mono-poly-toggle">
+                            <input type="checkbox" id="mono-moog">
+                            <span>Mono</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Noise Counter Layer -->
+                <div class="layer-control">
+                    <div class="layer-header">
+                        <label class="loop-toggle">
+                            <input type="checkbox" id="loop-noise" checked>
+                            <span>Noise Counter</span>
+                        </label>
+                        <input type="range" class="volume-slider" id="volume-noise" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-noise-value">80%</span>
+                    </div>
+                    <div class="layer-options">
+                        <label class="mono-poly-toggle">
+                            <input type="checkbox" id="mono-noise">
+                            <span>Mono</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 

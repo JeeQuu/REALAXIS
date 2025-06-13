@@ -127,9 +127,29 @@ body {
 }
 
 /* Loop Controls */
-.loop-toggles {
+.loop-controls {
+    min-width: 300px;
+}
+
+.layer-control {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border-radius: 6px;
+    border: 1px solid #333;
+}
+
+.layer-header {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 8px;
+}
+
+.layer-options {
+    display: flex;
+    gap: 15px;
+    margin-left: 20px;
 }
 
 .loop-toggle {
@@ -137,6 +157,7 @@ body {
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    min-width: 100px;
 }
 
 .loop-toggle input[type="checkbox"] {
@@ -147,6 +168,49 @@ body {
 
 .loop-toggle span {
     font-size: 0.95em;
+    font-weight: 500;
+}
+
+.volume-slider {
+    width: 80px;
+    height: 4px;
+    background: #333;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+    background: #2563eb;
+    cursor: pointer;
+    border-radius: 50%;
+    -webkit-appearance: none;
+}
+
+.volume-value {
+    font-size: 0.85em;
+    color: #888;
+    min-width: 35px;
+    text-align: right;
+}
+
+.mono-poly-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.mono-poly-toggle input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.mono-poly-toggle span {
+    font-size: 0.85em;
+    color: #ccc;
 }
 
 /* Effects Controls */

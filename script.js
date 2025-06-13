@@ -34,14 +34,49 @@ const loopConfigs = [
     { id: 'loop-noise', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804029/STEM_NOISE_COUNTER12jun_iy4smc.mp3' }
 ];
 
+// Layer system configuration
+const layerConfig = {
+    backing: {
+        loops: ['loop-backing'],
+        zones: []
+    },
+    diva: {
+        loops: ['loop-diva'],
+        zones: ['zone-diva-01', 'zone-diva-02', 'zone-diva-03', 'zone-diva-04', 'zone-diva-05', 
+                'zone-diva-06', 'zone-diva-07', 'zone-diva-08', 'zone-diva-09', 'zone-diva-10']
+    },
+    moog: {
+        loops: ['loop-moog'],
+        zones: ['zone-moog-01', 'zone-moog-02', 'zone-moog-03', 'zone-moog-04', 'zone-moog-05']
+    },
+    noise: {
+        loops: ['loop-noise'],
+        zones: ['zone-counter', 'zone-noise']
+    }
+};
+
+// Layer state management
+const layerState = {
+    backing: { volume: 0.8, mono: false },
+    diva: { volume: 0.8, mono: false },
+    moog: { volume: 0.8, mono: false },
+    noise: { volume: 0.8, mono: false }
+};
+
 // State management
 const zones = new Map();
 const loops = new Map();
 const activeAudio = new Map(); // Track active audio per zone
+const activeZonesByLayer = new Map(); // Track active zones per layer for mono mode
 let triggerMode = 'trigger';
 let releaseTime = 200; // Release time in milliseconds
 let draggedZone = null;
 let resizingZone = null;
+
+// Initialize layer tracking
+Object.keys(layerConfig).forEach(layer => {
+    activeZonesByLayer.set(layer, new Set());
+});
 
 // Initialize on start button click
 document.getElementById('startButton').addEventListener('click', async () => {
@@ -255,11 +290,21 @@ async function initializeLoops() {
     
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
-        console.log('Processing loop:', config.id, 'checkbox checked:', checkbox.checked);
+        const layer = getLayerForLoop(config.id);
+        
+        console.log('Processing loop:', config.id, 'checkbox checked:', checkbox.checked, 'layer:', layer);
         
         try {
             const { source, gainNode } = await createAudioSource(config.audio, true);
-            gainNode.gain.value = 0.8; // Slightly lower volume for loops
+            
+            // Apply layer volume if layer exists
+            if (layer) {
+                gainNode.gain.value = layerState[layer].volume;
+                console.log('Applied layer volume:', layerState[layer].volume, 'to loop:', config.id);
+            } else {
+                gainNode.gain.value = 0.8; // Default for loops without layers
+            }
+            
             gainNode.connect(masterGainNode);
             
             console.log('Loop audio loaded:', config.id, 'gain value:', gainNode.gain.value);
@@ -269,6 +314,7 @@ async function initializeLoops() {
                 gainNode,
                 checkbox,
                 config: config,
+                layer: layer,
                 isPlaying: checkbox.checked
             });
             
@@ -304,6 +350,15 @@ async function startLoop(loopId) {
     
     try {
         const { source, gainNode } = await createAudioSource(loop.config.audio, true);
+        
+        // Apply layer volume if layer exists
+        if (loop.layer) {
+            gainNode.gain.value = layerState[loop.layer].volume;
+            console.log('Applied layer volume:', layerState[loop.layer].volume, 'to restarted loop:', loopId);
+        } else {
+            gainNode.gain.value = 0.8; // Default volume
+        }
+        
         gainNode.connect(masterGainNode);
         
         // Stop old source if exists
@@ -316,6 +371,7 @@ async function startLoop(loopId) {
         source.start(0);
         
         loops.set(loopId, loop);
+        console.log('Loop restarted:', loopId);
     } catch (error) {
         console.error(`Failed to start loop ${loopId}:`, error);
     }
@@ -412,15 +468,33 @@ async function playZoneSound(zoneId) {
         return;
     }
     
-    console.log('Playing zone:', zoneId);
+    const layer = getLayerForZone(zoneId);
+    if (!layer) {
+        console.error('Layer not found for zone:', zoneId);
+        return;
+    }
+    
+    console.log('Playing zone:', zoneId, 'in layer:', layer);
     console.log('Audio context state:', audioContext.state);
     console.log('Zone config:', zone.config);
     console.log('Trigger mode:', triggerMode);
+    console.log('Layer state:', layerState[layer]);
     
     // In trigger mode, don't restart if already playing
     if (triggerMode === 'trigger' && activeAudio.has(zoneId)) {
         console.log('Zone already playing in trigger mode, ignoring:', zoneId);
         return;
+    }
+    
+    // Handle mono mode - stop other sounds in the same layer
+    if (layerState[layer].mono) {
+        const activeZonesInLayer = activeZonesByLayer.get(layer);
+        for (const activeZoneId of activeZonesInLayer) {
+            if (activeZoneId !== zoneId) {
+                console.log('Mono mode: stopping', activeZoneId, 'to play', zoneId);
+                stopZoneSound(activeZoneId);
+            }
+        }
     }
     
     // Stop any existing sound for this zone (important for hold mode)
@@ -429,9 +503,10 @@ async function playZoneSound(zoneId) {
     try {
         const { source, gainNode } = await createAudioSource(zone.config.audio);
         
-        // Set gain to ensure it's audible
-        gainNode.gain.value = 1.0;
-        console.log('Gain node value set to:', gainNode.gain.value);
+        // Apply layer volume
+        const layerVolume = layerState[layer].volume;
+        gainNode.gain.value = layerVolume;
+        console.log('Applied layer volume:', layerVolume, 'to zone:', zoneId);
         
         // Connect to reverb if needed
         if (zone.config.reverb) {
@@ -447,7 +522,10 @@ async function playZoneSound(zoneId) {
         console.log('Master gain value:', masterGainNode.gain.value);
         
         // Store active audio
-        activeAudio.set(zoneId, { source, gainNode });
+        activeAudio.set(zoneId, { source, gainNode, layer });
+        
+        // Track active zone in layer
+        activeZonesByLayer.get(layer).add(zoneId);
         
         // Add active class
         zone.element.classList.add('active');
@@ -462,6 +540,7 @@ async function playZoneSound(zoneId) {
             console.log('Playback ended for zone:', zoneId);
             zone.element.classList.remove('active');
             activeAudio.delete(zoneId);
+            activeZonesByLayer.get(layer).delete(zoneId);
         };
     } catch (error) {
         console.error(`Failed to play zone ${zoneId}:`, error);
@@ -488,6 +567,11 @@ function stopZoneSound(zoneId) {
             try {
                 audio.source.stop();
                 activeAudio.delete(zoneId);
+                
+                // Clean up layer tracking
+                if (audio.layer) {
+                    activeZonesByLayer.get(audio.layer).delete(zoneId);
+                }
             } catch (error) {
                 // Source might already be stopped, ignore error
                 console.log('Source already stopped:', zoneId);
@@ -609,14 +693,56 @@ function setupEventListeners() {
     // Save/Load layout
     document.getElementById('saveLayout').addEventListener('click', saveLayout);
     document.getElementById('loadLayout').addEventListener('click', loadLayout);
+    
+    // Layer volume controls
+    ['backing', 'diva', 'moog', 'noise'].forEach(layerName => {
+        // Volume slider
+        const volumeSlider = document.getElementById(`volume-${layerName}`);
+        const volumeValue = document.getElementById(`volume-${layerName}-value`);
+        
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            layerState[layerName].volume = volume;
+            volumeValue.textContent = `${e.target.value}%`;
+            
+            console.log(`${layerName} layer volume set to:`, volume);
+            
+            // Update all active audio in this layer
+            updateLayerVolume(layerName, volume);
+        });
+        
+        // Mono/poly toggle (skip backing as it doesn't have zones)
+        if (layerName !== 'backing') {
+            const monoToggle = document.getElementById(`mono-${layerName}`);
+            monoToggle.addEventListener('change', (e) => {
+                layerState[layerName].mono = e.target.checked;
+                console.log(`${layerName} layer mono mode:`, e.target.checked);
+                
+                // If switching to mono and multiple zones are active, stop all but the most recent
+                if (e.target.checked) {
+                    const activeZones = Array.from(activeZonesByLayer.get(layerName));
+                    if (activeZones.length > 1) {
+                        // Keep the most recently triggered zone (last in array)
+                        const keepZone = activeZones[activeZones.length - 1];
+                        activeZones.slice(0, -1).forEach(zoneId => {
+                            console.log('Mono mode: stopping', zoneId, 'keeping', keepZone);
+                            stopZoneSound(zoneId);
+                        });
+                    }
+                }
+            });
+        }
+    });
 }
 
 // Save layout to localStorage
 function saveLayout() {
     const layout = {
-        zones: []
+        zones: [],
+        layers: {}
     };
     
+    // Save zone positions
     zones.forEach((zone, id) => {
         const element = zone.element;
         const camera = element.parentElement.parentElement.dataset.camera;
@@ -631,7 +757,21 @@ function saveLayout() {
         });
     });
     
+    // Save layer settings
+    Object.keys(layerState).forEach(layerName => {
+        layout.layers[layerName] = {
+            volume: layerState[layerName].volume,
+            mono: layerState[layerName].mono
+        };
+    });
+    
+    // Save trigger mode and release time
+    layout.triggerMode = triggerMode;
+    layout.releaseTime = releaseTime;
+    
     localStorage.setItem('quantastical-layout', JSON.stringify(layout));
+    
+    console.log('Layout saved:', layout);
     
     // Visual feedback
     const button = document.getElementById('saveLayout');
@@ -656,23 +796,74 @@ function loadLayout() {
     const layout = JSON.parse(savedLayout);
     const cameras = document.querySelectorAll('.camera-screen');
     
-    layout.zones.forEach(zoneLayout => {
-        const zone = zones.get(zoneLayout.id);
-        if (!zone) return;
-        
-        const element = zone.element;
-        const targetCamera = cameras[parseInt(zoneLayout.camera) - 1];
-        
-        if (targetCamera) {
-            targetCamera.appendChild(element);
-            element.style.left = zoneLayout.left;
-            element.style.top = zoneLayout.top;
-            element.style.width = zoneLayout.width;
-            element.style.height = zoneLayout.height;
+    console.log('Loading layout:', layout);
+    
+    // Load zone positions
+    if (layout.zones) {
+        layout.zones.forEach(zoneLayout => {
+            const zone = zones.get(zoneLayout.id);
+            if (!zone) return;
             
-            zone.camera = parseInt(zoneLayout.camera);
+            const element = zone.element;
+            const targetCamera = cameras[parseInt(zoneLayout.camera) - 1];
+            
+            if (targetCamera) {
+                targetCamera.appendChild(element);
+                element.style.left = zoneLayout.left;
+                element.style.top = zoneLayout.top;
+                element.style.width = zoneLayout.width;
+                element.style.height = zoneLayout.height;
+                
+                zone.camera = parseInt(zoneLayout.camera);
+            }
+        });
+    }
+    
+    // Load layer settings
+    if (layout.layers) {
+        Object.keys(layout.layers).forEach(layerName => {
+            const layerSettings = layout.layers[layerName];
+            
+            // Update layer state
+            layerState[layerName].volume = layerSettings.volume;
+            layerState[layerName].mono = layerSettings.mono;
+            
+            // Update UI controls
+            const volumeSlider = document.getElementById(`volume-${layerName}`);
+            const volumeValue = document.getElementById(`volume-${layerName}-value`);
+            if (volumeSlider) {
+                volumeSlider.value = Math.round(layerSettings.volume * 100);
+                volumeValue.textContent = `${Math.round(layerSettings.volume * 100)}%`;
+            }
+            
+            if (layerName !== 'backing') {
+                const monoToggle = document.getElementById(`mono-${layerName}`);
+                if (monoToggle) {
+                    monoToggle.checked = layerSettings.mono;
+                }
+            }
+            
+            // Update active audio volumes
+            updateLayerVolume(layerName, layerSettings.volume);
+        });
+    }
+    
+    // Load trigger mode and release time
+    if (layout.triggerMode) {
+        triggerMode = layout.triggerMode;
+        const radio = document.getElementById(triggerMode === 'trigger' ? 'modeTrigger' : 'modeHold');
+        if (radio) radio.checked = true;
+    }
+    
+    if (layout.releaseTime) {
+        releaseTime = layout.releaseTime;
+        const slider = document.getElementById('releaseTime');
+        const value = document.getElementById('releaseTimeValue');
+        if (slider) {
+            slider.value = releaseTime;
+            value.textContent = `${releaseTime}ms`;
         }
-    });
+    }
     
     // Visual feedback
     const button = document.getElementById('loadLayout');
@@ -840,3 +1031,45 @@ window.safariAudioTest = async function() {
     
     console.log('=== END SAFARI TEST ===');
 };
+
+// Get layer for a zone
+function getLayerForZone(zoneId) {
+    for (const [layerName, config] of Object.entries(layerConfig)) {
+        if (config.zones.includes(zoneId)) {
+            return layerName;
+        }
+    }
+    return null;
+}
+
+// Get layer for a loop
+function getLayerForLoop(loopId) {
+    for (const [layerName, config] of Object.entries(layerConfig)) {
+        if (config.loops.includes(loopId)) {
+            return layerName;
+        }
+    }
+    return null;
+}
+
+// Update volume for all active audio in a layer
+function updateLayerVolume(layerName, volume) {
+    // Update active zones in this layer
+    const config = layerConfig[layerName];
+    config.zones.forEach(zoneId => {
+        const audio = activeAudio.get(zoneId);
+        if (audio) {
+            audio.gainNode.gain.value = volume;
+            console.log(`Updated zone ${zoneId} volume to:`, volume);
+        }
+    });
+    
+    // Update loops in this layer
+    config.loops.forEach(loopId => {
+        const loop = loops.get(loopId);
+        if (loop && loop.gainNode) {
+            loop.gainNode.gain.value = volume;
+            console.log(`Updated loop ${loopId} volume to:`, volume);
+        }
+    });
+}

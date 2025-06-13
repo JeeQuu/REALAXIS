@@ -5,25 +5,25 @@ let reverbGainNode;
 let dryGainNode;
 let masterGainNode;
 
-// Zone configurations
+// Zone configurations - now with individual trigger modes
 const zoneConfigs = [
-    { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee' },
-    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true },
-    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher' },
-    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis' }
+    { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee', mode: 'trigger' },
+    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
+    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
+    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
+    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
+    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
+    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis', mode: 'trigger' }
 ];
 
 // Loop configurations
@@ -272,11 +272,12 @@ function initializeZones() {
         
         camera.appendChild(zoneElement);
         
-        // Store zone data
+        // Store zone data with individual mode
         zones.set(config.id, {
             element: zoneElement,
             config: config,
-            camera: cameraIndex + 1
+            camera: cameraIndex + 1,
+            mode: config.mode // Individual zone mode
         });
         
         setupZoneInteractions(zoneElement, config);
@@ -387,9 +388,29 @@ function stopLoop(loopId) {
 
 // Setup zone interactions
 function setupZoneInteractions(zoneElement, config) {
+    // Set up mode toggle button
+    const modeToggle = zoneElement.querySelector('.zone-mode-toggle');
+    const zone = zones.get(config.id);
+    updateZoneModeToggle(modeToggle, zone.mode);
+    
+    modeToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Toggle mode
+        zone.mode = zone.mode === 'trigger' ? 'hold' : 'trigger';
+        updateZoneModeToggle(modeToggle, zone.mode);
+        
+        console.log(`Zone ${config.id} mode changed to:`, zone.mode);
+        
+        // Stop any currently playing sound when switching modes
+        stopZoneSound(config.id);
+    });
+    
     // Mouse enter - both modes trigger on hover
     zoneElement.addEventListener('mouseenter', (e) => {
-        console.log('Zone mouseenter:', config.id, 'Mode:', triggerMode);
+        const currentMode = zone.mode; // Use individual zone mode
+        console.log('Zone mouseenter:', config.id, 'Mode:', currentMode);
         
         // Change cursor for entire zone
         document.body.className = config.cursor;
@@ -398,15 +419,16 @@ function setupZoneInteractions(zoneElement, config) {
         playZoneSound(config.id);
     });
     
-    // Mouse leave - different behavior based on mode
+    // Mouse leave - different behavior based on individual zone mode
     zoneElement.addEventListener('mouseleave', (e) => {
-        console.log('Zone mouseleave:', config.id, 'Mode:', triggerMode);
+        const currentMode = zone.mode; // Use individual zone mode
+        console.log('Zone mouseleave:', config.id, 'Mode:', currentMode);
         
         // Reset cursor
         document.body.className = '';
         
         // Only stop sound in hold mode
-        if (triggerMode === 'hold') {
+        if (currentMode === 'hold') {
             stopZoneSound(config.id);
         }
         // In trigger mode, let the sound play to completion
@@ -418,7 +440,7 @@ function setupZoneInteractions(zoneElement, config) {
     
     // Drag handling
     zoneElement.addEventListener('dragstart', (e) => {
-        if (e.target.classList.contains('zone-resize-handle')) return;
+        if (e.target.classList.contains('zone-resize-handle') || e.target.classList.contains('zone-mode-toggle')) return;
         draggedZone = zoneElement;
         zoneElement.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
@@ -460,6 +482,19 @@ function setupZoneInteractions(zoneElement, config) {
     });
 }
 
+// Update zone mode toggle appearance
+function updateZoneModeToggle(toggle, mode) {
+    if (mode === 'hold') {
+        toggle.textContent = 'H';
+        toggle.classList.add('hold-mode');
+        toggle.title = 'Hold mode: plays while hovering. Click to switch to Trigger mode.';
+    } else {
+        toggle.textContent = 'T';
+        toggle.classList.remove('hold-mode');
+        toggle.title = 'Trigger mode: plays to end when triggered. Click to switch to Hold mode.';
+    }
+}
+
 // Play zone sound
 async function playZoneSound(zoneId) {
     const zone = zones.get(zoneId);
@@ -474,14 +509,16 @@ async function playZoneSound(zoneId) {
         return;
     }
     
+    const currentMode = zone.mode; // Use individual zone mode
+    
     console.log('Playing zone:', zoneId, 'in layer:', layer);
     console.log('Audio context state:', audioContext.state);
     console.log('Zone config:', zone.config);
-    console.log('Trigger mode:', triggerMode);
+    console.log('Zone mode:', currentMode);
     console.log('Layer state:', layerState[layer]);
     
     // In trigger mode, don't restart if already playing
-    if (triggerMode === 'trigger' && activeAudio.has(zoneId)) {
+    if (currentMode === 'trigger' && activeAudio.has(zoneId)) {
         console.log('Zone already playing in trigger mode, ignoring:', zoneId);
         return;
     }
@@ -626,11 +663,20 @@ function setupCameraDropZones() {
 function setupEventListeners() {
     setupCameraDropZones();
     
-    // Trigger mode toggle
+    // Trigger mode toggle - now sets all zones to the selected mode
     document.querySelectorAll('input[name="triggerMode"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
-            triggerMode = e.target.value;
-            console.log('Trigger mode changed to:', triggerMode);
+            const newMode = e.target.value;
+            console.log('Setting all zones to mode:', newMode);
+            
+            // Update all zones to the new mode
+            zones.forEach((zone, zoneId) => {
+                zone.mode = newMode;
+                const modeToggle = zone.element.querySelector('.zone-mode-toggle');
+                if (modeToggle) {
+                    updateZoneModeToggle(modeToggle, newMode);
+                }
+            });
             
             // Stop all sounds when switching modes
             activeAudio.forEach((audio, zoneId) => {
@@ -746,7 +792,7 @@ function downloadLayout() {
         name: "Quantastical Layout"
     };
     
-    // Save zone positions
+    // Save zone positions and modes
     zones.forEach((zone, id) => {
         const element = zone.element;
         const camera = element.parentElement.parentElement.dataset.camera;
@@ -757,7 +803,8 @@ function downloadLayout() {
             left: element.style.left,
             top: element.style.top,
             width: element.style.width,
-            height: element.style.height
+            height: element.style.height,
+            mode: zone.mode // Save individual zone mode
         });
     });
     
@@ -841,7 +888,7 @@ function loadLayoutFromData(layout) {
         console.warn('Layout version mismatch. This may cause issues.');
     }
     
-    // Load zone positions
+    // Load zone positions and modes
     if (layout.zones) {
         layout.zones.forEach(zoneLayout => {
             const zone = zones.get(zoneLayout.id);
@@ -861,6 +908,15 @@ function loadLayoutFromData(layout) {
                 element.style.height = zoneLayout.height;
                 
                 zone.camera = parseInt(zoneLayout.camera);
+                
+                // Restore individual zone mode
+                if (zoneLayout.mode) {
+                    zone.mode = zoneLayout.mode;
+                    const modeToggle = element.querySelector('.zone-mode-toggle');
+                    if (modeToggle) {
+                        updateZoneModeToggle(modeToggle, zone.mode);
+                    }
+                }
             }
         });
     }
@@ -932,14 +988,23 @@ function loadLayoutFromData(layout) {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Space to toggle trigger mode
+    // Space to toggle all zones trigger mode
     if (e.code === 'Space' && !e.target.matches('input')) {
         e.preventDefault();
         const currentMode = document.querySelector('input[name="triggerMode"]:checked').value;
         const newMode = currentMode === 'trigger' ? 'hold' : 'trigger';
         document.getElementById(newMode === 'trigger' ? 'modeTrigger' : 'modeHold').checked = true;
-        triggerMode = newMode;
-        console.log('Keyboard shortcut: switched to', newMode, 'mode');
+        
+        // Update all zones
+        zones.forEach((zone, zoneId) => {
+            zone.mode = newMode;
+            const modeToggle = zone.element.querySelector('.zone-mode-toggle');
+            if (modeToggle) {
+                updateZoneModeToggle(modeToggle, newMode);
+            }
+        });
+        
+        console.log('Keyboard shortcut: set all zones to', newMode, 'mode');
     }
     
     // Number keys 1-4 to toggle loops

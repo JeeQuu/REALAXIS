@@ -426,7 +426,7 @@ function setupEventListeners() {
     document.getElementById('saveLayout').addEventListener('click', saveLayout);
     document.getElementById('loadLayout').addEventListener('click', loadLayout);
     
-    // Mouse tracking for lag simulation
+    // Mouse tracking for lag simulation (only affect zones, not entire interface)
     document.addEventListener('mousemove', (e) => {
         if (mouseTrackingTimeout) {
             clearTimeout(mouseTrackingTimeout);
@@ -436,12 +436,20 @@ function setupEventListeners() {
         const deltaY = Math.abs(e.clientY - lastMousePosition.y);
         const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         
-        // Simulate tracking loss at high speeds
+        // Simulate tracking loss at high speeds - only affect detection zones
         if (speed > 50 && trackingLag > 0) {
-            document.body.style.pointerEvents = 'none';
+            // Disable only zone interactions, not the entire interface
+            const detectionZones = document.querySelectorAll('.detection-zone');
+            detectionZones.forEach(zone => {
+                zone.style.pointerEvents = 'none';
+                zone.style.opacity = '0.5';
+            });
             
             mouseTrackingTimeout = setTimeout(() => {
-                document.body.style.pointerEvents = 'auto';
+                detectionZones.forEach(zone => {
+                    zone.style.pointerEvents = 'auto';
+                    zone.style.opacity = '1';
+                });
             }, trackingLag);
         }
         

@@ -13,22 +13,22 @@ const cameraObjects = {
     4: 'coffee'         // Camera 4: Coffee mug (changeable)
 };
 
-// Object silhouettes for backgrounds
+// Object silhouettes for backgrounds - made more visible for testing
 const objectSilhouettes = {
     coffee: `<svg viewBox="0 0 100 100" class="camera-silhouette">
-        <path d="M20 30 L20 70 Q20 80 30 80 L60 80 Q70 80 70 70 L70 50 Q80 50 80 40 L80 35 Q80 30 70 30 L70 35 L70 30 L20 30 Z" fill="rgba(139, 69, 19, 0.1)"/>
-        <path d="M25 35 L65 35 L65 65 Q65 70 60 70 L30 70 Q25 70 25 65 Z" fill="rgba(139, 69, 19, 0.05)"/>
+        <path d="M20 30 L20 70 Q20 80 30 80 L60 80 Q70 80 70 70 L70 50 Q80 50 80 40 L80 35 Q80 30 70 30 L70 35 L70 30 L20 30 Z" fill="rgba(139, 69, 19, 0.4)" stroke="rgba(139, 69, 19, 0.6)" stroke-width="1"/>
+        <path d="M25 35 L65 35 L65 65 Q65 70 60 70 L30 70 Q25 70 25 65 Z" fill="rgba(139, 69, 19, 0.2)"/>
     </svg>`,
     extinguisher: `<svg viewBox="0 0 100 100" class="camera-silhouette">
-        <rect x="35" y="20" width="30" height="60" rx="15" fill="rgba(220, 38, 38, 0.1)"/>
-        <rect x="30" y="15" width="40" height="10" rx="5" fill="rgba(220, 38, 38, 0.08)"/>
-        <circle cx="50" cy="30" r="8" fill="rgba(220, 38, 38, 0.12)"/>
-        <rect x="47" y="35" width="6" height="35" fill="rgba(220, 38, 38, 0.06)"/>
+        <rect x="35" y="20" width="30" height="60" rx="15" fill="rgba(220, 38, 38, 0.4)" stroke="rgba(220, 38, 38, 0.6)" stroke-width="1"/>
+        <rect x="30" y="15" width="40" height="10" rx="5" fill="rgba(220, 38, 38, 0.3)"/>
+        <circle cx="50" cy="30" r="8" fill="rgba(220, 38, 38, 0.5)"/>
+        <rect x="47" y="35" width="6" height="35" fill="rgba(220, 38, 38, 0.3)"/>
     </svg>`,
     tennis: `<svg viewBox="0 0 100 100" class="camera-silhouette">
-        <circle cx="50" cy="50" r="35" fill="rgba(34, 197, 94, 0.1)"/>
-        <path d="M15 50 Q50 30 85 50 Q50 70 15 50" stroke="rgba(34, 197, 94, 0.08)" stroke-width="2" fill="none"/>
-        <path d="M50 15 Q30 50 50 85 Q70 50 50 15" stroke="rgba(34, 197, 94, 0.08)" stroke-width="2" fill="none"/>
+        <circle cx="50" cy="50" r="35" fill="rgba(34, 197, 94, 0.4)" stroke="rgba(34, 197, 94, 0.6)" stroke-width="1"/>
+        <path d="M15 50 Q50 30 85 50 Q50 70 15 50" stroke="rgba(34, 197, 94, 0.4)" stroke-width="3" fill="none"/>
+        <path d="M50 15 Q30 50 50 85 Q70 50 50 15" stroke="rgba(34, 197, 94, 0.4)" stroke-width="3" fill="none"/>
     </svg>`
 };
 
@@ -353,10 +353,13 @@ function initializeZones() {
 // Initialize camera background silhouettes
 function initializeCameraSilhouettes() {
     const cameras = document.querySelectorAll('.camera-screen');
+    console.log('Initializing silhouettes for', cameras.length, 'cameras');
     
     cameras.forEach((camera, index) => {
         const cameraNumber = index + 1;
         const objectType = cameraObjects[cameraNumber];
+        
+        console.log(`Camera ${cameraNumber}: objectType = ${objectType}`);
         
         if (objectType && objectSilhouettes[objectType]) {
             // Create silhouette container
@@ -364,10 +367,16 @@ function initializeCameraSilhouettes() {
             silhouetteContainer.className = 'camera-silhouette-container';
             silhouetteContainer.innerHTML = objectSilhouettes[objectType];
             
+            // Add some debug styling to make sure it's visible
+            silhouetteContainer.style.border = '1px solid rgba(255,0,0,0.2)'; // Debug border
+            
             // Insert as first child so it appears behind zones
             camera.insertBefore(silhouetteContainer, camera.firstChild);
             
-            console.log(`Camera ${cameraNumber} initialized with ${objectType} silhouette`);
+            console.log(`✅ Camera ${cameraNumber} initialized with ${objectType} silhouette`);
+            console.log('Silhouette HTML:', objectSilhouettes[objectType]);
+        } else {
+            console.log(`❌ Camera ${cameraNumber}: No objectType or silhouette found`);
         }
     });
 }

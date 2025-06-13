@@ -505,9 +505,35 @@ body {
     border-color: transparent transparent #2563eb transparent;
 }
 
+/* Camera Background Silhouettes */
+.camera-silhouette-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-silhouette {
+    width: 300px;
+    height: 300px;
+    opacity: 0.3;
+    filter: blur(1px);
+    transition: opacity 0.3s ease;
+}
+
+/* Hover effect to make silhouettes more visible when camera is active */
+.camera-screen:hover .camera-silhouette {
+    opacity: 0.5;
+}
+
 /* Custom Cursors */
 .cursor-coffee { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text x="0" y="24" font-size="24">☕</text></svg>') 16 16, auto; }
-.cursor-sunflower { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text x="0" y="24" font-size="24">🌻</text></svg>') 16 16, auto; }
 .cursor-extinguisher { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text x="0" y="24" font-size="24">🧯</text></svg>') 16 16, auto; }
 .cursor-tennis { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text x="0" y="24" font-size="24">🎾</text></svg>') 16 16, auto; }
 

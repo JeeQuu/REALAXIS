@@ -5,25 +5,52 @@ let reverbGainNode;
 let dryGainNode;
 let masterGainNode;
 
-// Zone configurations - Monica ruff defaults (all hold mode)
+// Camera object assignments - easily changeable for performance development
+const cameraObjects = {
+    1: 'coffee',        // Camera 1: Coffee mug
+    2: 'extinguisher',  // Camera 2: Fire extinguisher  
+    3: 'tennis',        // Camera 3: Tennis ball
+    4: 'coffee'         // Camera 4: Coffee mug (changeable)
+};
+
+// Object silhouettes for backgrounds
+const objectSilhouettes = {
+    coffee: `<svg viewBox="0 0 100 100" class="camera-silhouette">
+        <path d="M20 30 L20 70 Q20 80 30 80 L60 80 Q70 80 70 70 L70 50 Q80 50 80 40 L80 35 Q80 30 70 30 L70 35 L70 30 L20 30 Z" fill="rgba(139, 69, 19, 0.1)"/>
+        <path d="M25 35 L65 35 L65 65 Q65 70 60 70 L30 70 Q25 70 25 65 Z" fill="rgba(139, 69, 19, 0.05)"/>
+    </svg>`,
+    extinguisher: `<svg viewBox="0 0 100 100" class="camera-silhouette">
+        <rect x="35" y="20" width="30" height="60" rx="15" fill="rgba(220, 38, 38, 0.1)"/>
+        <rect x="30" y="15" width="40" height="10" rx="5" fill="rgba(220, 38, 38, 0.08)"/>
+        <circle cx="50" cy="30" r="8" fill="rgba(220, 38, 38, 0.12)"/>
+        <rect x="47" y="35" width="6" height="35" fill="rgba(220, 38, 38, 0.06)"/>
+    </svg>`,
+    tennis: `<svg viewBox="0 0 100 100" class="camera-silhouette">
+        <circle cx="50" cy="50" r="35" fill="rgba(34, 197, 94, 0.1)"/>
+        <path d="M15 50 Q50 30 85 50 Q50 70 15 50" stroke="rgba(34, 197, 94, 0.08)" stroke-width="2" fill="none"/>
+        <path d="M50 15 Q30 50 50 85 Q70 50 50 15" stroke="rgba(34, 197, 94, 0.08)" stroke-width="2" fill="none"/>
+    </svg>`
+};
+
+// Zone configurations - Monica ruff defaults (all hold mode, no sunflower)
 const zoneConfigs = [
     { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee', mode: 'hold' },
-    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
-    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
-    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
-    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
-    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
-    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis', mode: 'hold' }
+    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-coffee', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-coffee', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-coffee', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-extinguisher', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-extinguisher', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-coffee', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-extinguisher', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-coffee', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-extinguisher', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-extinguisher', reverb: true, mode: 'hold' },
+    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-tennis', mode: 'hold' },
+    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-tennis', mode: 'hold' },
+    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-tennis', mode: 'hold' },
+    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-tennis', mode: 'hold' },
+    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-tennis', mode: 'hold' },
+    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-coffee', mode: 'hold' }
 ];
 
 // Loop configurations
@@ -122,6 +149,7 @@ document.getElementById('startButton').addEventListener('click', async () => {
         
         document.getElementById('startScreen').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
+        initializeCameraSilhouettes(); // Add silhouettes first
         initializeZones();
         
         // Auto-load Monica's default layout positions
@@ -312,6 +340,28 @@ function initializeZones() {
         });
         
         setupZoneInteractions(zoneElement, config);
+    });
+}
+
+// Initialize camera background silhouettes
+function initializeCameraSilhouettes() {
+    const cameras = document.querySelectorAll('.camera-screen');
+    
+    cameras.forEach((camera, index) => {
+        const cameraNumber = index + 1;
+        const objectType = cameraObjects[cameraNumber];
+        
+        if (objectType && objectSilhouettes[objectType]) {
+            // Create silhouette container
+            const silhouetteContainer = document.createElement('div');
+            silhouetteContainer.className = 'camera-silhouette-container';
+            silhouetteContainer.innerHTML = objectSilhouettes[objectType];
+            
+            // Insert as first child so it appears behind zones
+            camera.insertBefore(silhouetteContainer, camera.firstChild);
+            
+            console.log(`Camera ${cameraNumber} initialized with ${objectType} silhouette`);
+        }
     });
 }
 

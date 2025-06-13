@@ -5,14 +5,14 @@ let reverbGainNode;
 let dryGainNode;
 let masterGainNode;
 
-// Zone configurations - now with individual trigger modes
+// Zone configurations - now with individual trigger modes and better defaults
 const zoneConfigs = [
     { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee', mode: 'trigger' },
-    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
+    { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
     { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
     { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
     { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
@@ -55,12 +55,12 @@ const layerConfig = {
     }
 };
 
-// Layer state management
+// Layer state management with better defaults
 const layerState = {
-    backing: { volume: 0.8, mono: false },
-    diva: { volume: 0.8, mono: false },
-    moog: { volume: 0.8, mono: false },
-    noise: { volume: 0.8, mono: false }
+    backing: { volume: 0.7, mono: false }, // Slightly lower backing
+    diva: { volume: 0.8, mono: true }, // Mono for clean vocal lines
+    moog: { volume: 0.9, mono: true }, // Mono for tight bass, slightly louder
+    noise: { volume: 0.6, mono: false } // Poly for textures, lower volume
 };
 
 // State management
@@ -285,16 +285,19 @@ function initializeZones() {
     });
 }
 
-// Initialize loops
+// Initialize loops - all start simultaneously for perfect sync
 async function initializeLoops() {
-    console.log('Initializing loops...');
+    console.log('Initializing synchronized loops...');
     console.log('Audio context state:', audioContext.state);
+    
+    // Load all loops first without starting them
+    const loadedLoops = [];
     
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
         const layer = getLayerForLoop(config.id);
         
-        console.log('Processing loop:', config.id, 'checkbox checked:', checkbox.checked, 'layer:', layer);
+        console.log('Loading loop:', config.id, 'checkbox checked:', checkbox.checked, 'layer:', layer);
         
         try {
             const { source, gainNode } = await createAudioSource(config.audio, true);
@@ -307,33 +310,37 @@ async function initializeLoops() {
                 gainNode.gain.value = 0.8; // Default for loops without layers
             }
             
-            gainNode.connect(masterGainNode);
+            // Create mute gain node for this loop
+            const muteGainNode = audioContext.createGain();
+            muteGainNode.gain.value = checkbox.checked ? 1.0 : 0.0; // Start muted if unchecked
             
-            console.log('Loop audio loaded:', config.id, 'gain value:', gainNode.gain.value);
+            // Connect: source -> gainNode -> muteGainNode -> master
+            source.connect(gainNode);
+            gainNode.connect(muteGainNode);
+            muteGainNode.connect(masterGainNode);
             
-            loops.set(config.id, {
+            console.log('Loop loaded:', config.id, 'volume:', gainNode.gain.value, 'muted:', !checkbox.checked);
+            
+            const loopData = {
                 source,
                 gainNode,
+                muteGainNode, // New mute control
                 checkbox,
                 config: config,
                 layer: layer,
-                isPlaying: checkbox.checked
+                isPlaying: true, // Always playing, just muted/unmuted
+                isMuted: !checkbox.checked
+            };
+            
+            loops.set(config.id, loopData);
+            loadedLoops.push(loopData);
+            
+            // Set up mute/unmute toggle instead of start/stop
+            checkbox.addEventListener('change', (e) => {
+                console.log('Loop mute toggle:', config.id, 'muted:', !e.target.checked);
+                toggleLoopMute(config.id, !e.target.checked);
             });
             
-            if (checkbox.checked) {
-                console.log('Starting loop immediately:', config.id);
-                source.start(0);
-                console.log('Loop started:', config.id);
-            }
-            
-            checkbox.addEventListener('change', async (e) => {
-                console.log('Loop checkbox changed:', config.id, 'checked:', e.target.checked);
-                if (e.target.checked) {
-                    await startLoop(config.id);
-                } else {
-                    stopLoop(config.id);
-                }
-            });
         } catch (error) {
             console.error(`Failed to load loop ${config.id}:`, error);
             checkbox.disabled = true;
@@ -342,49 +349,33 @@ async function initializeLoops() {
         }
     }
     
-    console.log('Loops initialization complete. Active loops:', loops.size);
-}
-
-// Start loop
-async function startLoop(loopId) {
-    const loop = loops.get(loopId);
-    if (!loop) return;
+    // Start ALL loops simultaneously for perfect sync
+    console.log('Starting all loops simultaneously for perfect sync...');
+    const startTime = audioContext.currentTime + 0.1; // Small delay to ensure everything is ready
     
-    try {
-        const { source, gainNode } = await createAudioSource(loop.config.audio, true);
-        
-        // Apply layer volume if layer exists
-        if (loop.layer) {
-            gainNode.gain.value = layerState[loop.layer].volume;
-            console.log('Applied layer volume:', layerState[loop.layer].volume, 'to restarted loop:', loopId);
-        } else {
-            gainNode.gain.value = 0.8; // Default volume
-        }
-        
-        gainNode.connect(masterGainNode);
-        
-        // Stop old source if exists
-        if (loop.source) {
-            loop.source.stop();
-        }
-        
-        loop.source = source;
-        loop.gainNode = gainNode;
-        source.start(0);
-        
-        loops.set(loopId, loop);
-        console.log('Loop restarted:', loopId);
-    } catch (error) {
-        console.error(`Failed to start loop ${loopId}:`, error);
-    }
+    loadedLoops.forEach(loopData => {
+        loopData.source.start(startTime);
+        console.log('Scheduled loop start:', loopData.config.id, 'at time:', startTime);
+    });
+    
+    console.log('All loops initialized and synchronized. Active loops:', loops.size);
 }
 
-// Stop loop
-function stopLoop(loopId) {
+// Toggle loop mute (keeps loops synchronized)
+function toggleLoopMute(loopId, shouldMute) {
     const loop = loops.get(loopId);
-    if (loop && loop.source) {
-        loop.source.stop();
-    }
+    if (!loop || !loop.muteGainNode) return;
+    
+    const fadeTime = 0.05; // 50ms smooth fade for mute/unmute
+    const currentTime = audioContext.currentTime;
+    
+    console.log(`${shouldMute ? 'Muting' : 'Unmuting'} loop:`, loopId);
+    
+    // Smooth fade to avoid clicks
+    loop.muteGainNode.gain.setValueAtTime(loop.muteGainNode.gain.value, currentTime);
+    loop.muteGainNode.gain.linearRampToValueAtTime(shouldMute ? 0.0 : 1.0, currentTime + fadeTime);
+    
+    loop.isMuted = shouldMute;
 }
 
 // Setup zone interactions
@@ -893,11 +884,19 @@ function downloadLayout() {
         });
     });
     
-    // Save layer settings
+    // Save layer settings and loop states
     Object.keys(layerState).forEach(layerName => {
         layout.layers[layerName] = {
             volume: layerState[layerName].volume,
             mono: layerState[layerName].mono
+        };
+    });
+    
+    // Save loop mute states
+    layout.loops = {};
+    loops.forEach((loop, loopId) => {
+        layout.loops[loopId] = {
+            muted: loop.isMuted
         };
     });
     
@@ -1038,6 +1037,27 @@ function loadLayoutFromData(layout) {
             
             // Update active audio volumes
             updateLayerVolume(layerName, layerSettings.volume);
+        });
+    }
+    
+    // Load loop mute states
+    if (layout.loops) {
+        Object.keys(layout.loops).forEach(loopId => {
+            const loop = loops.get(loopId);
+            if (loop) {
+                const shouldMute = layout.loops[loopId].muted;
+                loop.isMuted = shouldMute;
+                
+                // Update checkbox and mute gain
+                const checkbox = document.getElementById(loopId);
+                if (checkbox) {
+                    checkbox.checked = !shouldMute;
+                }
+                
+                if (loop.muteGainNode) {
+                    loop.muteGainNode.gain.value = shouldMute ? 0.0 : 1.0;
+                }
+            }
         });
     }
     
@@ -1259,7 +1279,7 @@ function updateLayerVolume(layerName, volume) {
         }
     });
     
-    // Update loops in this layer
+    // Update loops in this layer (main volume, not mute)
     config.loops.forEach(loopId => {
         const loop = loops.get(loopId);
         if (loop && loop.gainNode) {

@@ -5,25 +5,25 @@ let reverbGainNode;
 let dryGainNode;
 let masterGainNode;
 
-// Zone configurations - now with individual trigger modes and better defaults
+// Zone configurations - Monica ruff defaults (all hold mode)
 const zoneConfigs = [
-    { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee', mode: 'trigger' },
+    { id: 'zone-counter', label: 'Countermelody', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/countermelody_ugl15i.mp3', cursor: 'cursor-coffee', mode: 'hold' },
     { id: 'zone-diva-01', label: 'Diva 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_01_hvzz6h.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
     { id: 'zone-diva-02', label: 'Diva 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_02_haafdv.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
     { id: 'zone-diva-03', label: 'Diva 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_03_qmqjan.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
     { id: 'zone-diva-04', label: 'Diva 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_04_wetsuf.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
     { id: 'zone-diva-05', label: 'Diva 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_05_jdthhb.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
-    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'trigger' },
-    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
-    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
-    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
-    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
-    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher', mode: 'trigger' },
-    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis', mode: 'trigger' }
+    { id: 'zone-diva-06', label: 'Diva 06', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_06_yocajt.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-07', label: 'Diva 07', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804049/diva_lead_dry_07_jnqpa6.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-08', label: 'Diva 08', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_08_fqepng.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-09', label: 'Diva 09', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/diva_lead_dry_09_an4cpq.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-diva-10', label: 'Diva 10', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/diva_lead_dry_10_gcz8o0.mp3', cursor: 'cursor-sunflower', reverb: true, mode: 'hold' },
+    { id: 'zone-moog-01', label: 'Moog 01', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0101_ww9fjw.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
+    { id: 'zone-moog-02', label: 'Moog 02', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0102_vahunb.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
+    { id: 'zone-moog-03', label: 'Moog 03', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804050/moog_bass_0103_hyz5p6.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
+    { id: 'zone-moog-04', label: 'Moog 04', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0104_tydufl.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
+    { id: 'zone-moog-05', label: 'Moog 05', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804051/moog_bass_0105_llghgv.mp3', cursor: 'cursor-extinguisher', mode: 'hold' },
+    { id: 'zone-noise', label: 'Noise Splash', audio: 'https://res.cloudinary.com/dakoxedxt/video/upload/v1749804048/noise_splash_hm3iz8.mp3', cursor: 'cursor-tennis', mode: 'hold' }
 ];
 
 // Loop configurations
@@ -55,12 +55,12 @@ const layerConfig = {
     }
 };
 
-// Layer state management with better defaults
+// Layer state management with Monica ruff defaults
 const layerState = {
-    backing: { volume: 0.7, mono: false }, // Slightly lower backing
-    diva: { volume: 0.8, mono: true }, // Mono for clean vocal lines
-    moog: { volume: 0.9, mono: true }, // Mono for tight bass, slightly louder
-    noise: { volume: 0.6, mono: false } // Poly for textures, lower volume
+    backing: { volume: 0.5, mono: false }, // Lower backing like Monica setup
+    diva: { volume: 0.8, mono: false }, // Poly mode for layering
+    moog: { volume: 0.8, mono: false }, // Poly mode for rich bass
+    noise: { volume: 0.8, mono: false } // Poly for textures
 };
 
 // State management
@@ -68,9 +68,9 @@ const zones = new Map();
 const loops = new Map();
 const activeAudio = new Map(); // Track active audio per zone
 const activeZonesByLayer = new Map(); // Track active zones per layer for mono mode
-let triggerMode = 'trigger';
-let releaseTime = 200; // Release time in milliseconds for hold mode
-let chokeTime = 50; // Shorter fade time for monophonic choke groups (ms)
+let triggerMode = 'hold'; // Default to hold mode like Monica setup
+let releaseTime = 350; // Monica's release time
+let chokeTime = 20; // Monica's choke time
 let draggedZone = null;
 let resizingZone = null;
 

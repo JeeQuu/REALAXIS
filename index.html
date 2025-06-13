@@ -38,33 +38,33 @@
                 <!-- Backing Layer -->
                 <div class="layer-control">
                     <div class="layer-header">
-                        <label class="loop-toggle">
+                        <div class="loop-toggle">
                             <input type="checkbox" id="loop-backing" checked>
                             <span>Backing</span>
-                        </label>
-                        <input type="range" class="volume-slider" id="volume-backing" min="0" max="100" value="70">
-                        <span class="volume-value" id="volume-backing-value">70%</span>
+                        </div>
+                        <input type="range" class="volume-slider" id="volume-backing" min="0" max="100" value="50">
+                        <span class="volume-value" id="volume-backing-value">50%</span>
                     </div>
                 </div>
                 
                 <!-- Diva Lead Layer -->
                 <div class="layer-control">
                     <div class="layer-header">
-                        <label class="loop-toggle">
+                        <div class="loop-toggle">
                             <input type="checkbox" id="loop-diva" checked>
                             <span>Diva Lead</span>
-                        </label>
+                        </div>
                         <input type="range" class="volume-slider" id="volume-diva" min="0" max="100" value="80">
                         <span class="volume-value" id="volume-diva-value">80%</span>
                     </div>
                     <div class="layer-options">
-                        <label class="mono-poly-toggle">
-                            <input type="checkbox" id="mono-diva" checked>
+                        <div class="mono-poly-toggle">
+                            <input type="checkbox" id="mono-diva">
                             <span>Mono</span>
-                        </label>
+                        </div>
                         <div class="set-all-modes">
-                            <button class="set-mode-btn" data-layer="diva" data-mode="trigger">Set All Trigger</button>
-                            <button class="set-mode-btn" data-layer="diva" data-mode="hold">Set All Hold</button>
+                            <button class="set-mode-btn" data-layer="diva" data-mode="trigger">Set All T</button>
+                            <button class="set-mode-btn" data-layer="diva" data-mode="hold">Set All H</button>
                         </div>
                     </div>
                 </div>
@@ -72,21 +72,21 @@
                 <!-- Moog Bass Layer -->
                 <div class="layer-control">
                     <div class="layer-header">
-                        <label class="loop-toggle">
+                        <div class="loop-toggle">
                             <input type="checkbox" id="loop-moog" checked>
                             <span>Moog Bass</span>
-                        </label>
-                        <input type="range" class="volume-slider" id="volume-moog" min="0" max="100" value="90">
-                        <span class="volume-value" id="volume-moog-value">90%</span>
+                        </div>
+                        <input type="range" class="volume-slider" id="volume-moog" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-moog-value">80%</span>
                     </div>
                     <div class="layer-options">
-                        <label class="mono-poly-toggle">
-                            <input type="checkbox" id="mono-moog" checked>
+                        <div class="mono-poly-toggle">
+                            <input type="checkbox" id="mono-moog">
                             <span>Mono</span>
-                        </label>
+                        </div>
                         <div class="set-all-modes">
-                            <button class="set-mode-btn" data-layer="moog" data-mode="trigger">Set All Trigger</button>
-                            <button class="set-mode-btn" data-layer="moog" data-mode="hold">Set All Hold</button>
+                            <button class="set-mode-btn" data-layer="moog" data-mode="trigger">Set All T</button>
+                            <button class="set-mode-btn" data-layer="moog" data-mode="hold">Set All H</button>
                         </div>
                     </div>
                 </div>
@@ -94,21 +94,21 @@
                 <!-- Noise Counter Layer -->
                 <div class="layer-control">
                     <div class="layer-header">
-                        <label class="loop-toggle">
+                        <div class="loop-toggle">
                             <input type="checkbox" id="loop-noise" checked>
                             <span>Noise Counter</span>
-                        </label>
-                        <input type="range" class="volume-slider" id="volume-noise" min="0" max="100" value="60">
-                        <span class="volume-value" id="volume-noise-value">60%</span>
+                        </div>
+                        <input type="range" class="volume-slider" id="volume-noise" min="0" max="100" value="80">
+                        <span class="volume-value" id="volume-noise-value">80%</span>
                     </div>
                     <div class="layer-options">
-                        <label class="mono-poly-toggle">
+                        <div class="mono-poly-toggle">
                             <input type="checkbox" id="mono-noise">
                             <span>Mono</span>
-                        </label>
+                        </div>
                         <div class="set-all-modes">
-                            <button class="set-mode-btn" data-layer="noise" data-mode="trigger">Set All Trigger</button>
-                            <button class="set-mode-btn" data-layer="noise" data-mode="hold">Set All Hold</button>
+                            <button class="set-mode-btn" data-layer="noise" data-mode="trigger">Set All T</button>
+                            <button class="set-mode-btn" data-layer="noise" data-mode="hold">Set All H</button>
                         </div>
                     </div>
                 </div>
@@ -134,13 +134,13 @@
                 </div>
                 <div class="effect-control">
                     <label>Hold Mode Release Time</label>
-                    <input type="range" id="releaseTime" min="50" max="2000" step="50" value="200">
-                    <span id="releaseTimeValue">200ms</span>
+                    <input type="range" id="releaseTime" min="50" max="2000" step="50" value="350">
+                    <span id="releaseTimeValue">350ms</span>
                 </div>
                 <div class="effect-control">
                     <label>Mono Choke Time</label>
-                    <input type="range" id="chokeTime" min="10" max="200" step="10" value="50">
-                    <span id="chokeTimeValue">50ms</span>
+                    <input type="range" id="chokeTime" min="10" max="200" step="10" value="20">
+                    <span id="chokeTimeValue">20ms</span>
                 </div>
             </div>
         </div>

@@ -54,52 +54,103 @@ document.getElementById('startButton').addEventListener('click', async () => {
 
 // Initialize Audio Context and Effects
 async function initializeAudio() {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // Create master gain
-    masterGainNode = audioContext.createGain();
-    masterGainNode.gain.value = 1.0;
-    masterGainNode.connect(audioContext.destination);
-    
-    // Create reverb using ConvolverNode
-    reverbNode = audioContext.createConvolver();
-    
-    // Create impulse response for reverb
-    const length = audioContext.sampleRate * 2; // 2 second reverb
-    const impulse = audioContext.createBuffer(2, length, audioContext.sampleRate);
-    
-    for (let channel = 0; channel < 2; channel++) {
-        const channelData = impulse.getChannelData(channel);
-        for (let i = 0; i < length; i++) {
-            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('Audio Context created, state:', audioContext.state);
+        
+        // Resume context if suspended (common in modern browsers)
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+            console.log('Audio Context resumed, new state:', audioContext.state);
         }
+        
+        // Create master gain
+        masterGainNode = audioContext.createGain();
+        masterGainNode.gain.value = 1.0;
+        masterGainNode.connect(audioContext.destination);
+        console.log('Master gain node created and connected');
+        
+        // Create reverb using ConvolverNode
+        reverbNode = audioContext.createConvolver();
+        
+        // Create impulse response for reverb
+        const length = audioContext.sampleRate * 2; // 2 second reverb
+        const impulse = audioContext.createBuffer(2, length, audioContext.sampleRate);
+        
+        for (let channel = 0; channel < 2; channel++) {
+            const channelData = impulse.getChannelData(channel);
+            for (let i = 0; i < length; i++) {
+                channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+            }
+        }
+        
+        reverbNode.buffer = impulse;
+        console.log('Reverb impulse response created');
+        
+        // Create wet/dry mix
+        reverbGainNode = audioContext.createGain();
+        reverbGainNode.gain.value = 0.3;
+        dryGainNode = audioContext.createGain();
+        dryGainNode.gain.value = 0.7;
+        
+        reverbNode.connect(reverbGainNode);
+        reverbGainNode.connect(masterGainNode);
+        dryGainNode.connect(masterGainNode);
+        
+        console.log('Audio Context fully initialized:', audioContext.state);
+        console.log('Sample rate:', audioContext.sampleRate);
+        console.log('Master gain value:', masterGainNode.gain.value);
+        
+        // Test if audio context is working with a simple test tone
+        testAudioContext();
+        
+    } catch (error) {
+        console.error('Failed to initialize audio context:', error);
+        alert('Failed to initialize audio system: ' + error.message);
     }
-    
-    reverbNode.buffer = impulse;
-    
-    // Create wet/dry mix
-    reverbGainNode = audioContext.createGain();
-    reverbGainNode.gain.value = 0.3;
-    dryGainNode = audioContext.createGain();
-    dryGainNode.gain.value = 0.7;
-    
-    reverbNode.connect(reverbGainNode);
-    reverbGainNode.connect(masterGainNode);
-    dryGainNode.connect(masterGainNode);
-    
-    console.log('Audio Context initialized:', audioContext.state);
+}
+
+// Test function to verify audio context is working
+function testAudioContext() {
+    try {
+        console.log('Testing audio context with simple tone...');
+        const oscillator = audioContext.createOscillator();
+        const testGain = audioContext.createGain();
+        
+        oscillator.connect(testGain);
+        testGain.connect(masterGainNode);
+        
+        oscillator.frequency.value = 440; // A4 note
+        testGain.gain.value = 0.1; // Low volume
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2); // Very short beep
+        
+        console.log('Test tone scheduled');
+    } catch (error) {
+        console.error('Test tone failed:', error);
+    }
 }
 
 // Create audio buffer source
 async function createAudioSource(url, loop = false) {
     try {
         console.log('Loading audio:', url);
+        console.log('Audio context state before fetch:', audioContext.state);
+        
         const response = await fetch(url);
+        console.log('Fetch response status:', response.status, response.statusText);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const arrayBuffer = await response.arrayBuffer();
+        console.log('ArrayBuffer loaded, size:', arrayBuffer.byteLength, 'bytes');
+        
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        console.log('Audio decoded - Duration:', audioBuffer.duration, 'seconds, Channels:', audioBuffer.numberOfChannels, 'Sample Rate:', audioBuffer.sampleRate);
         
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
@@ -109,10 +160,15 @@ async function createAudioSource(url, loop = false) {
         gainNode.gain.value = 1.0;
         source.connect(gainNode);
         
-        console.log('Audio loaded successfully:', url);
+        console.log('Audio source created successfully for:', url);
         return { source, gainNode, buffer: audioBuffer };
     } catch (error) {
         console.error('Error loading audio:', url, error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }
@@ -157,13 +213,19 @@ function initializeZones() {
 
 // Initialize loops
 async function initializeLoops() {
+    console.log('Initializing loops...');
+    console.log('Audio context state:', audioContext.state);
+    
     for (const config of loopConfigs) {
         const checkbox = document.getElementById(config.id);
+        console.log('Processing loop:', config.id, 'checkbox checked:', checkbox.checked);
         
         try {
             const { source, gainNode } = await createAudioSource(config.audio, true);
             gainNode.gain.value = 0.8; // Slightly lower volume for loops
             gainNode.connect(masterGainNode);
+            
+            console.log('Loop audio loaded:', config.id, 'gain value:', gainNode.gain.value);
             
             loops.set(config.id, {
                 source,
@@ -174,11 +236,13 @@ async function initializeLoops() {
             });
             
             if (checkbox.checked) {
+                console.log('Starting loop immediately:', config.id);
                 source.start(0);
-                console.log('Started loop:', config.id);
+                console.log('Loop started:', config.id);
             }
             
             checkbox.addEventListener('change', async (e) => {
+                console.log('Loop checkbox changed:', config.id, 'checked:', e.target.checked);
                 if (e.target.checked) {
                     await startLoop(config.id);
                 } else {
@@ -188,8 +252,12 @@ async function initializeLoops() {
         } catch (error) {
             console.error(`Failed to load loop ${config.id}:`, error);
             checkbox.disabled = true;
+            checkbox.nextElementSibling.style.color = '#666';
+            checkbox.nextElementSibling.title = 'Failed to load: ' + error.message;
         }
     }
+    
+    console.log('Loops initialization complete. Active loops:', loops.size);
 }
 
 // Start loop
@@ -296,9 +364,14 @@ function setupZoneInteractions(zoneElement, config) {
 // Play zone sound
 async function playZoneSound(zoneId) {
     const zone = zones.get(zoneId);
-    if (!zone) return;
+    if (!zone) {
+        console.error('Zone not found:', zoneId);
+        return;
+    }
     
     console.log('Playing zone:', zoneId);
+    console.log('Audio context state:', audioContext.state);
+    console.log('Zone config:', zone.config);
     
     // Stop any existing sound for this zone
     stopZoneSound(zoneId);
@@ -308,17 +381,20 @@ async function playZoneSound(zoneId) {
         
         // Set gain to ensure it's audible
         gainNode.gain.value = 1.0;
+        console.log('Gain node value set to:', gainNode.gain.value);
         
         // Connect to reverb if needed
         if (zone.config.reverb) {
             // Create a splitter to send to both dry and wet
             gainNode.connect(reverbNode);
             gainNode.connect(dryGainNode);
-            console.log('Connected to reverb:', zoneId);
+            console.log('Connected to reverb for zone:', zoneId);
+            console.log('Reverb gain:', reverbGainNode.gain.value, 'Dry gain:', dryGainNode.gain.value);
         } else {
             gainNode.connect(masterGainNode);
-            console.log('Connected directly to master:', zoneId);
+            console.log('Connected directly to master for zone:', zoneId);
         }
+        console.log('Master gain value:', masterGainNode.gain.value);
         
         // Store active audio
         activeAudio.set(zoneId, { source, gainNode });
@@ -327,12 +403,13 @@ async function playZoneSound(zoneId) {
         zone.element.classList.add('active');
         
         // Start playback
+        console.log('Starting playback at time:', audioContext.currentTime);
         source.start(0);
-        console.log('Started playback:', zoneId);
+        console.log('Playback started for zone:', zoneId);
         
         // Remove active state when ended
         source.onended = () => {
-            console.log('Playback ended:', zoneId);
+            console.log('Playback ended for zone:', zoneId);
             zone.element.classList.remove('active');
             activeAudio.delete(zoneId);
         };
@@ -586,3 +663,57 @@ window.addEventListener('resize', () => {
         element.style.top = `${Math.min(currentY, Math.max(0, maxY))}px`;
     });
 });
+
+// Audio diagnostic function - call from console: audioDiagnostic()
+window.audioDiagnostic = function() {
+    console.log('=== AUDIO DIAGNOSTIC ===');
+    
+    if (!audioContext) {
+        console.error('❌ Audio context not initialized');
+        return;
+    }
+    
+    console.log('✅ Audio context exists');
+    console.log('State:', audioContext.state);
+    console.log('Sample rate:', audioContext.sampleRate);
+    console.log('Current time:', audioContext.currentTime);
+    
+    if (!masterGainNode) {
+        console.error('❌ Master gain node missing');
+        return;
+    }
+    
+    console.log('✅ Master gain node exists');
+    console.log('Master gain value:', masterGainNode.gain.value);
+    
+    console.log('Zones loaded:', zones.size);
+    console.log('Loops loaded:', loops.size);
+    console.log('Active audio:', activeAudio.size);
+    
+    // Check if any loops are playing
+    loops.forEach((loop, id) => {
+        console.log(`Loop ${id}:`, loop.isPlaying ? '▶️ Playing' : '⏹️ Stopped', 'Gain:', loop.gainNode.gain.value);
+    });
+    
+    // Test audio with simple beep
+    console.log('Playing test beep...');
+    try {
+        const oscillator = audioContext.createOscillator();
+        const testGain = audioContext.createGain();
+        
+        oscillator.connect(testGain);
+        testGain.connect(masterGainNode);
+        
+        oscillator.frequency.value = 800;
+        testGain.gain.value = 0.1;
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+        
+        console.log('✅ Test beep scheduled');
+    } catch (error) {
+        console.error('❌ Test beep failed:', error);
+    }
+    
+    console.log('=== END DIAGNOSTIC ===');
+};

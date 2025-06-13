@@ -690,9 +690,10 @@ function setupEventListeners() {
         trackingLagValue.textContent = `${e.target.value}ms`;
     });
     
-    // Save/Load layout
-    document.getElementById('saveLayout').addEventListener('click', saveLayout);
-    document.getElementById('loadLayout').addEventListener('click', loadLayout);
+    // Download/Upload layout
+    document.getElementById('downloadLayout').addEventListener('click', downloadLayout);
+    document.getElementById('uploadLayout').addEventListener('click', uploadLayout);
+    document.getElementById('layoutFileInput').addEventListener('change', handleLayoutFileUpload);
     
     // Layer volume controls
     ['backing', 'diva', 'moog', 'noise'].forEach(layerName => {
@@ -735,11 +736,14 @@ function setupEventListeners() {
     });
 }
 
-// Save layout to localStorage
-function saveLayout() {
+// Download layout as JSON file
+function downloadLayout() {
     const layout = {
         zones: [],
-        layers: {}
+        layers: {},
+        version: "1.0",
+        timestamp: new Date().toISOString(),
+        name: "Quantastical Layout"
     };
     
     // Save zone positions
@@ -769,14 +773,28 @@ function saveLayout() {
     layout.triggerMode = triggerMode;
     layout.releaseTime = releaseTime;
     
-    localStorage.setItem('quantastical-layout', JSON.stringify(layout));
+    // Create filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `quantastical-layout-${timestamp}.json`;
     
-    console.log('Layout saved:', layout);
+    // Create and download file
+    const dataStr = JSON.stringify(layout, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = filename;
+    link.click();
+    
+    // Clean up
+    URL.revokeObjectURL(link.href);
+    
+    console.log('Layout downloaded:', filename, layout);
     
     // Visual feedback
-    const button = document.getElementById('saveLayout');
+    const button = document.getElementById('downloadLayout');
     const originalText = button.textContent;
-    button.textContent = 'Saved!';
+    button.textContent = '✅ Downloaded!';
     button.style.backgroundColor = '#22c55e';
     
     setTimeout(() => {
@@ -785,24 +803,52 @@ function saveLayout() {
     }, 2000);
 }
 
-// Load layout from localStorage
-function loadLayout() {
-    const savedLayout = localStorage.getItem('quantastical-layout');
-    if (!savedLayout) {
-        alert('No saved layout found');
-        return;
-    }
+// Upload and load layout from JSON file
+function uploadLayout() {
+    const fileInput = document.getElementById('layoutFileInput');
+    fileInput.click();
+}
+
+// Handle file upload
+function handleLayoutFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
     
-    const layout = JSON.parse(savedLayout);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const layout = JSON.parse(e.target.result);
+            loadLayoutFromData(layout);
+        } catch (error) {
+            console.error('Error parsing layout file:', error);
+            alert('Error loading layout file. Please check the file format.');
+        }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    event.target.value = '';
+}
+
+// Load layout from data object
+function loadLayoutFromData(layout) {
     const cameras = document.querySelectorAll('.camera-screen');
     
-    console.log('Loading layout:', layout);
+    console.log('Loading layout from file:', layout);
+    
+    // Validate layout version (for future compatibility)
+    if (layout.version && layout.version !== "1.0") {
+        console.warn('Layout version mismatch. This may cause issues.');
+    }
     
     // Load zone positions
     if (layout.zones) {
         layout.zones.forEach(zoneLayout => {
             const zone = zones.get(zoneLayout.id);
-            if (!zone) return;
+            if (!zone) {
+                console.warn('Zone not found:', zoneLayout.id);
+                return;
+            }
             
             const element = zone.element;
             const targetCamera = cameras[parseInt(zoneLayout.camera) - 1];
@@ -822,6 +868,11 @@ function loadLayout() {
     // Load layer settings
     if (layout.layers) {
         Object.keys(layout.layers).forEach(layerName => {
+            if (!layerState[layerName]) {
+                console.warn('Unknown layer:', layerName);
+                return;
+            }
+            
             const layerSettings = layout.layers[layerName];
             
             // Update layer state
@@ -866,15 +917,17 @@ function loadLayout() {
     }
     
     // Visual feedback
-    const button = document.getElementById('loadLayout');
+    const button = document.getElementById('uploadLayout');
     const originalText = button.textContent;
-    button.textContent = 'Loaded!';
+    button.textContent = '✅ Loaded!';
     button.style.backgroundColor = '#22c55e';
     
     setTimeout(() => {
         button.textContent = originalText;
         button.style.backgroundColor = '';
     }, 2000);
+    
+    console.log('Layout loaded successfully from file');
 }
 
 // Keyboard shortcuts
@@ -899,16 +952,16 @@ document.addEventListener('keydown', (e) => {
         }
     }
     
-    // S to save layout
+    // S to download layout
     if (e.code === 'KeyS' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        saveLayout();
+        downloadLayout();
     }
     
-    // L to load layout
+    // L to upload layout
     if (e.code === 'KeyL' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        loadLayout();
+        uploadLayout();
     }
 });
 

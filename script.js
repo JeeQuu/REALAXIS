@@ -272,7 +272,7 @@ function initializeZones() {
         
         camera.appendChild(zoneElement);
         
-        // Store zone data with individual mode
+        // Store zone data with individual mode first
         zones.set(config.id, {
             element: zoneElement,
             config: config,
@@ -388,14 +388,22 @@ function stopLoop(loopId) {
 
 // Setup zone interactions
 function setupZoneInteractions(zoneElement, config) {
-    // Set up mode toggle button
+    // Set up mode toggle button - get zone after it's been stored
     const modeToggle = zoneElement.querySelector('.zone-mode-toggle');
-    const zone = zones.get(config.id);
-    updateZoneModeToggle(modeToggle, zone.mode);
+    
+    // Initialize the toggle appearance
+    updateZoneModeToggle(modeToggle, config.mode);
     
     modeToggle.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
+        
+        // Get the zone from the Map (now it should exist)
+        const zone = zones.get(config.id);
+        if (!zone) {
+            console.error('Zone not found in Map:', config.id);
+            return;
+        }
         
         // Toggle mode
         zone.mode = zone.mode === 'trigger' ? 'hold' : 'trigger';
@@ -409,7 +417,8 @@ function setupZoneInteractions(zoneElement, config) {
     
     // Mouse enter - both modes trigger on hover
     zoneElement.addEventListener('mouseenter', (e) => {
-        const currentMode = zone.mode; // Use individual zone mode
+        const zone = zones.get(config.id); // Get fresh zone data
+        const currentMode = zone ? zone.mode : config.mode; // Fallback to config if zone not found
         console.log('Zone mouseenter:', config.id, 'Mode:', currentMode);
         
         // Change cursor for entire zone
@@ -421,7 +430,8 @@ function setupZoneInteractions(zoneElement, config) {
     
     // Mouse leave - different behavior based on individual zone mode
     zoneElement.addEventListener('mouseleave', (e) => {
-        const currentMode = zone.mode; // Use individual zone mode
+        const zone = zones.get(config.id); // Get fresh zone data
+        const currentMode = zone ? zone.mode : config.mode; // Fallback to config if zone not found
         console.log('Zone mouseleave:', config.id, 'Mode:', currentMode);
         
         // Reset cursor
@@ -663,25 +673,43 @@ function setupCameraDropZones() {
 function setupEventListeners() {
     setupCameraDropZones();
     
-    // Trigger mode toggle - now sets all zones to the selected mode
-    document.querySelectorAll('input[name="triggerMode"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const newMode = e.target.value;
-            console.log('Setting all zones to mode:', newMode);
+    // Layer "Set All" mode buttons
+    document.querySelectorAll('.set-mode-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const layerName = button.dataset.layer;
+            const mode = button.dataset.mode;
             
-            // Update all zones to the new mode
-            zones.forEach((zone, zoneId) => {
-                zone.mode = newMode;
-                const modeToggle = zone.element.querySelector('.zone-mode-toggle');
-                if (modeToggle) {
-                    updateZoneModeToggle(modeToggle, newMode);
+            console.log(`Setting all ${layerName} zones to ${mode} mode`);
+            
+            // Get zones for this layer
+            const layerZones = layerConfig[layerName].zones;
+            
+            // Update all zones in this layer
+            layerZones.forEach(zoneId => {
+                const zone = zones.get(zoneId);
+                if (zone) {
+                    zone.mode = mode;
+                    const modeToggle = zone.element.querySelector('.zone-mode-toggle');
+                    if (modeToggle) {
+                        updateZoneModeToggle(modeToggle, mode);
+                    }
+                    
+                    // Stop any currently playing sound when switching modes
+                    stopZoneSound(zoneId);
                 }
             });
             
-            // Stop all sounds when switching modes
-            activeAudio.forEach((audio, zoneId) => {
-                stopZoneSound(zoneId);
-            });
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = '✓ Set!';
+            button.style.backgroundColor = mode === 'trigger' ? '#2563eb' : '#22c55e';
+            button.style.color = 'white';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = '';
+                button.style.color = '';
+            }, 1500);
         });
     });
     
@@ -988,25 +1016,6 @@ function loadLayoutFromData(layout) {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Space to toggle all zones trigger mode
-    if (e.code === 'Space' && !e.target.matches('input')) {
-        e.preventDefault();
-        const currentMode = document.querySelector('input[name="triggerMode"]:checked').value;
-        const newMode = currentMode === 'trigger' ? 'hold' : 'trigger';
-        document.getElementById(newMode === 'trigger' ? 'modeTrigger' : 'modeHold').checked = true;
-        
-        // Update all zones
-        zones.forEach((zone, zoneId) => {
-            zone.mode = newMode;
-            const modeToggle = zone.element.querySelector('.zone-mode-toggle');
-            if (modeToggle) {
-                updateZoneModeToggle(modeToggle, newMode);
-            }
-        });
-        
-        console.log('Keyboard shortcut: set all zones to', newMode, 'mode');
-    }
-    
     // Number keys 1-4 to toggle loops
     if (e.code >= 'Digit1' && e.code <= 'Digit4') {
         const index = parseInt(e.code.slice(-1)) - 1;

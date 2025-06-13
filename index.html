@@ -62,6 +62,10 @@
                             <input type="checkbox" id="mono-diva">
                             <span>Mono</span>
                         </label>
+                        <div class="set-all-modes">
+                            <button class="set-mode-btn" data-layer="diva" data-mode="trigger">Set All Trigger</button>
+                            <button class="set-mode-btn" data-layer="diva" data-mode="hold">Set All Hold</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -80,6 +84,10 @@
                             <input type="checkbox" id="mono-moog">
                             <span>Mono</span>
                         </label>
+                        <div class="set-all-modes">
+                            <button class="set-mode-btn" data-layer="moog" data-mode="trigger">Set All Trigger</button>
+                            <button class="set-mode-btn" data-layer="moog" data-mode="hold">Set All Hold</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -98,6 +106,10 @@
                             <input type="checkbox" id="mono-noise">
                             <span>Mono</span>
                         </label>
+                        <div class="set-all-modes">
+                            <button class="set-mode-btn" data-layer="noise" data-mode="trigger">Set All Trigger</button>
+                            <button class="set-mode-btn" data-layer="noise" data-mode="hold">Set All Hold</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -120,21 +132,7 @@
                     <input type="range" id="trackingLag" min="0" max="1000" value="100">
                     <span id="trackingLagValue">100ms</span>
                 </div>
-            </div>
-
-            <!-- Zone Mode Toggle -->
-            <div class="mode-controls">
-                <h3>Set All Zones Mode</h3>
-                <div class="mode-toggle">
-                    <input type="radio" id="modeTrigger" name="triggerMode" value="trigger" checked>
-                    <label for="modeTrigger">Set All to Trigger</label>
-                    <input type="radio" id="modeHold" name="triggerMode" value="hold">
-                    <label for="modeHold">Set All to Hold</label>
-                </div>
-                <p style="font-size: 0.8em; color: #888; margin-top: 5px;">
-                    Individual zones can be toggled with the T/H button in each zone
-                </p>
-                <div class="effect-control" style="margin-top: 10px;">
+                <div class="effect-control">
                     <label>Hold Mode Release Time</label>
                     <input type="range" id="releaseTime" min="50" max="2000" step="50" value="200">
                     <span id="releaseTimeValue">200ms</span>
